@@ -6,10 +6,8 @@ import (
 )
 
 func RespondJSON(w http.ResponseWriter, status int, statusMsg, message string, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	response := map[string]interface{}{}
 
-	response := make(map[string]interface{})
 	if statusMsg != "" {
 		response["status"] = statusMsg
 	}
@@ -20,5 +18,7 @@ func RespondJSON(w http.ResponseWriter, status int, statusMsg, message string, d
 		response["data"] = data
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(response)
 }
