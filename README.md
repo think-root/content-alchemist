@@ -1,18 +1,18 @@
-# chappie
+## Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Description](#description)
+- [API](#api)
+  - [/api/manual-generate/](#apimanual-generate)
+  - [/api/auto-generate/](#apiauto-generate)
+  - [/api/get-repository/](#apiget-repository)
+  - [/api/update-posted/](#apiupdate-posted)
+- [Contribution](#contribution)
+  - [run](#run)
+  - [build](#build)
+
+## Description
 
 An API server app that generates texts using AI, stores them in a database, and provides functionality to manage the stored records.
-
-## Table of Contents
-- [chappie](#chappie)
-  - [Table of Contents](#table-of-contents)
-  - [Details](#details)
-  - [API](#api)
-    - [/api/manual-generate/](#apimanual-generate)
-    - [/api/auto-generate/](#apiauto-generate)
-    - [/api/get-repository/](#apiget-repository)
-    - [/api/update-posted/](#apiupdate-posted)
-
-## Details
 
 I once had the idea to create an app that would manage a Telegram channel by searching for and posting interesting repositories using AI. That idea eventually grew into this project. You can read more details about how the idea was born here: [Part 1](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-1-VywRW) and [Part 2](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-2-X9Yjz). (The articles are in Ukrainian, but I think you’ll manage to translate them into your preferred language.)
 
@@ -140,5 +140,20 @@ I once had the idea to create an app that would manage a Telegram channel by sea
   "status": "ok",
   "message": "Posted status updated successfully"
 }
+```
+
+## Contribution
+
+- install [go](https://go.dev/dl/)
+- install [mariadb](https://mariadb.org/download/)
+
+### run
+```shell
+ go run ./cmd/server/main.go  
+```
+
+### build
+```shell
+go build -o chappie ./cmd/bot/main.go
 ```
 
