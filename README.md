@@ -52,7 +52,7 @@ I once had the idea to create an app that would manage a Telegram channel by sea
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to automatically generate content for trending repositories based on certain parameters.
+**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters.
 
 **Request Example:**
 ```json
