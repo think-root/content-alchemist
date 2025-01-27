@@ -24,7 +24,27 @@ I once had the idea to create an app that would manage a Telegram channel by sea
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to manually generate something. The exact details of what is generated are not provided in the `manual_generate.go` file.
+**Description:** This endpoint is used to manually generate content for a provided repository URL.
+
+**Request Example:**
+```json
+{
+  "url": "https://github.com/example/repo"
+}
+```
+
+**Response Example:**
+```json
+{
+  "status": "ok",
+  "added": [
+    "https://github.com/example/repo"
+  ],
+  "dont_added": []
+}
+```
+
+---
 
 ### /api/auto-generate/
 
@@ -32,7 +52,32 @@ I once had the idea to create an app that would manage a Telegram channel by sea
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to automatically generate something. The exact details of what is generated are not provided in the `auto_generate.go` file.
+**Description:** This endpoint is used to automatically generate content for trending repositories based on certain parameters.
+
+**Request Example:**
+```json
+{
+  "max_repos": 5,
+  "since": "weekly",
+  "spoken_language_code": "en"
+}
+```
+
+**Response Example:**
+```json
+{
+  "status": "ok",
+  "added": [
+    "https://github.com/example/repo1",
+    "https://github.com/example/repo2"
+  ],
+  "dont_added": [
+    "https://github.com/example/repo3"
+  ]
+}
+```
+
+---
 
 ### /api/get-repository/
 
@@ -40,36 +85,38 @@ I once had the idea to create an app that would manage a Telegram channel by sea
 
 **Method:** `POST`
 
-**Request Body:**
+**Description:** This endpoint retrieves a list of repositories based on the provided limit and posted status.
+
+**Request Example:**
 ```json
 {
-  "limit": int,
-  "posted": bool
+  "limit": 10,
+  "posted": false
 }
 ```
 
-**Response:**
+**Response Example:**
 ```json
 {
   "status": "ok",
   "message": "Repositories fetched successfully",
   "data": {
-    "all": int,
-    "posted": int,
-    "unposted": int,
+    "all": 50,
+    "posted": 20,
+    "unposted": 30,
     "items": [
       {
-        "id": string,
-        "posted": bool,
-        "url": string,
-        "text": string
+        "id": "1",
+        "posted": false,
+        "url": "https://github.com/example/repo",
+        "text": "Repository description here."
       }
     ]
   }
 }
 ```
 
-**Description:** This endpoint retrieves a list of repositories based on the provided limit and posted status. It returns the total count of all, posted, and unposted repositories, along with the repository details.
+---
 
 ### /api/update-posted/
 
@@ -77,15 +124,17 @@ I once had the idea to create an app that would manage a Telegram channel by sea
 
 **Method:** `POST`
 
-**Request Body:**
+**Description:** This endpoint updates the posted status of a repository identified by its URL.
+
+**Request Example:**
 ```json
 {
-  "url": string,
-  "posted": bool
+  "url": "https://github.com/example/repo",
+  "posted": true
 }
 ```
 
-**Response:**
+**Response Example:**
 ```json
 {
   "status": "ok",
@@ -93,4 +142,3 @@ I once had the idea to create an app that would manage a Telegram channel by sea
 }
 ```
 
-**Description:** This endpoint updates the posted status of a repository identified by its URL.
