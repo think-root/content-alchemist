@@ -1,0 +1,87 @@
+name: CI/CD chappie
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get repository name
+        id: repo_name
+        run: echo "repo=$(basename ${{ github.repository }})" >> $GITHUB_OUTPUT
+
+      - name: Execute remote commands via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            set -e  # Exit on any command error
+
+            if ! systemctl is-active --quiet docker; then
+              echo "Docker is not running. Starting Docker..."
+              sudo systemctl start docker
+            fi
+
+            if [ ! -e /var/run/docker.sock ]; then
+              echo "Docker socket does not exist at /var/run/docker.sock"
+              exit 1
+            fi
+
+            if [ ! -w /var/run/docker.sock ]; then
+              echo "Current user does not have write access to Docker socket."
+              sudo chmod 666 /var/run/docker.sock
+            fi
+
+            if ! groups $USER | grep -q docker; then
+              echo "Adding $USER to docker group"
+              sudo usermod -aG docker $USER
+              newgrp docker
+            fi
+
+            echo "Docker setup complete. Proceeding with deployment."
+
+            REPO_NAME="${{ github.repository }}"
+            REPO_FOLDER="$HOME/apps/${REPO_NAME##*/}"
+
+            echo "Deploying $REPO_NAME to $REPO_FOLDER"
+
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+            fi
+
+            if [ -d "$REPO_FOLDER" ]; then
+              echo "Removing existing repository folder..."
+              rm -rf "$REPO_FOLDER"
+            fi
+
+            echo "Cloning new version of the repository..."
+            git clone "https://github.com/${{ github.repository }}.git" "$REPO_FOLDER"
+
+            cd "$REPO_FOLDER"
+
+            echo "Setting up .env file..."
+            echo "${{ secrets.ENV_PROD }}" | base64 --decode > .env
+
+            # Зупинка та видалення існуючого контейнера
+            if docker inspect chappie >/dev/null 2>&1; then
+              echo "Stopping and removing existing container..."
+              docker compose down -v --rmi all
+            fi
+
+            # Збірка та запуск
+            docker compose up -d
+
+            echo "Deployment complete!"
