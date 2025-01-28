@@ -3,7 +3,7 @@ services:
     container_name: chappie
     restart: always
     ports:
-      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:9111:9111"
     image: chappie:latest
     build:
       context: .

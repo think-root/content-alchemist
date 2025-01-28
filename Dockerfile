@@ -4,7 +4,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-EXPOSE 9001
+EXPOSE 9111
 RUN go build -o chappie ./cmd/server/main.go
 
 # Runtime
