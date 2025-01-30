@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"chappie/database"
+	"chappie_server/database"
 	"encoding/base64"
 	"encoding/json"
 	"errors"

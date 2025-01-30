@@ -1,8 +1,8 @@
 package routers
 
 import (
-	"chappie/database"
-	"chappie/server"
+	"chappie_server/database"
+	"chappie_server/server"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -21,9 +21,9 @@ type getRepositoryItem struct {
 }
 
 type getRepositoryResponse struct {
-	All      int              `json:"all"`
-	Posted   int              `json:"posted"`
-	Unposted int              `json:"unposted"`
+	All      int                 `json:"all"`
+	Posted   int                 `json:"posted"`
+	Unposted int                 `json:"unposted"`
 	Items    []getRepositoryItem `json:"items"`
 }
 

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"chappie/config"
-	"chappie/server/middlewares"
-	"chappie/server/routers"
+	"chappie_server/config"
+	"chappie_server/server/middlewares"
+	"chappie_server/server/routers"
 	"log"
 	"net/http"
 

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"chappie/config"
+	"chappie_server/config"
 	"net/http"
 	"strings"
 )

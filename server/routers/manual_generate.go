@@ -1,9 +1,9 @@
 package routers
 
 import (
-	"chappie/database"
-	"chappie/llm"
-	"chappie/parser"
+	"chappie_server/database"
+	"chappie_server/llm"
+	"chappie_server/parser"
 	"encoding/json"
 	"log"
 	"net/http"
