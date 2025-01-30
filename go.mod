@@ -1,4 +1,4 @@
-module chappie
+module chappie_server
 
 go 1.23
 
