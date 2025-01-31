@@ -209,6 +209,6 @@ BEARER_TOKEN=<your server token>
 
 ### build
 ```shell
-go build -o chappie ./cmd/bot/main.go
+go build -o chappie_server ./cmd/server/main.go
 ```
 
