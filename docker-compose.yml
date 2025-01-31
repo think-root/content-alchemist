@@ -1,10 +1,10 @@
 services:
-  chappie:
-    container_name: chappie
+  chappie_server:
+    container_name: chappie_server
     restart: always
     ports:
       - "127.0.0.1:9111:9111"
-    image: chappie:latest
+    image: chappie_server:latest
     build:
       context: .
       dockerfile: Dockerfile
