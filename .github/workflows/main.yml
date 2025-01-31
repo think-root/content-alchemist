@@ -1,4 +1,4 @@
-name: CI/CD chappie
+name: CI/CD chappie_server
 
 on:
   push:
@@ -76,7 +76,7 @@ jobs:
             echo "${{ secrets.ENV_PROD }}" | base64 --decode > .env
 
             # Зупинка та видалення існуючого контейнера
-            if docker inspect chappie >/dev/null 2>&1; then
+            if docker inspect chappie_server >/dev/null 2>&1; then
               echo "Stopping and removing existing container..."
               docker compose down -v --rmi all
             fi
