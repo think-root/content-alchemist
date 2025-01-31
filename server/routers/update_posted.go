@@ -14,8 +14,8 @@ type updatePostedRequest struct {
 }
 
 func UpdatePostedStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		server.RespondJSON(w, http.StatusMethodNotAllowed, "error", "Only POST method is allowed", nil)
+	if r.Method != http.MethodPatch {
+		server.RespondJSON(w, http.StatusMethodNotAllowed, "error", "Only PATCH method is allowed", nil)
 		return
 	}
 
