@@ -177,10 +177,9 @@ BEARER_TOKEN=<your server token>
 
 **Endpoint:** `/think-root/api/update-posted/`
 
-**Method:** `POST`
+**Method:** `PATCH`
 
 **Description:** This endpoint updates the posted status of a repository identified by its URL.
-
 **Request Example:**
 ```json
 {
