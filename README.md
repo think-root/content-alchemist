@@ -60,7 +60,7 @@ create a **.env** file in the app root directory
 MISTRAL_TOKEN=<mistral api key>
 MISTRAL_AGENT=<get agent api id https://console.mistral.ai/build/agents>
 DB_CONNECTION=<db connection string e.g. user:password@tcp(localhost:3306)>
-BEARER_TOKEN=<your server token>
+BEARER_TOKEN=<your token for API protection>
 ```
 
 ### Deploy
@@ -73,13 +73,17 @@ BEARER_TOKEN=<your server token>
 
 ## API
 
+```text
+All API requests must include an Authorization header in the following format: Authorization: Bearer <BEARER_TOKEN>
+```
+
 ### /api/manual-generate/
 
 **Endpoint:** `/think-root/api/manual-generate/`
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to manually generate content for a provided repository URL.
+**Description:** This endpoint is used to manually generate description for a provided repository URL, and add it to the database.
 
 **Request Example:**
 ```json
@@ -107,7 +111,7 @@ BEARER_TOKEN=<your server token>
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters.
+**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database.
 
 **Request Example:**
 ```json
@@ -145,7 +149,7 @@ BEARER_TOKEN=<your server token>
 **Request Example:**
 ```json
 {
-  "limit": 10,
+  "limit": 1,
   "posted": false
 }
 ```
