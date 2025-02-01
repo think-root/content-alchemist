@@ -74,7 +74,8 @@ BEARER_TOKEN=<your token for API protection>
 ## API
 
 ```text
-All API requests must include an Authorization header in the following format: Authorization: Bearer <BEARER_TOKEN>
+All API requests must include an Authorization header in the following format: 
+Authorization: Bearer <BEARER_TOKEN>
 ```
 
 ### /api/manual-generate/
