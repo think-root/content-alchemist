@@ -1,26 +1,68 @@
+# Chappie Server
+
+[![Go Version](https://img.shields.io/github/go-mod/go-version/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server)
+[![License](https://img.shields.io/github/license/Think-Root/chappie_server)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server/releases)
+
 ## Table of Contents
-- [Table of Contents](#table-of-contents)
-- [Description](#description)
-- [How to run](#how-to-run)
-  - [Requirements](#requirements)
-  - [Preparation](#preparation)
-  - [Clone repo](#clone-repo)
-  - [Config](#config)
-  - [Deploy](#deploy)
-- [API](#api)
-  - [/api/manual-generate/](#apimanual-generate)
-  - [/api/auto-generate/](#apiauto-generate)
-  - [/api/get-repository/](#apiget-repository)
-  - [/api/update-posted/](#apiupdate-posted)
-- [Contribution](#contribution)
-  - [run](#run)
-  - [build](#build)
+
+- [Chappie Server](#chappie-server)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+    - [Key Features](#key-features)
+    - [Technology Stack](#technology-stack)
+  - [Blog Articles](#blog-articles)
+  - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+  - [How to run](#how-to-run)
+    - [Requirements](#requirements)
+    - [Preparation](#preparation)
+    - [Clone repo](#clone-repo)
+    - [Config](#config)
+    - [Deploy](#deploy)
+  - [API](#api)
+    - [/api/manual-generate/](#apimanual-generate)
+    - [/api/auto-generate/](#apiauto-generate)
+    - [/api/get-repository/](#apiget-repository)
+    - [/api/update-posted/](#apiupdate-posted)
+  - [Contribution](#contribution)
+    - [Development Setup](#development-setup)
+    - [Running Locally](#running-locally)
+    - [Building](#building)
+    - [Code Style Guidelines](#code-style-guidelines)
+    - [Pull Request Process](#pull-request-process)
+  - [Security](#security)
+  - [Troubleshooting](#troubleshooting)
 
 ## Description
 
-An API server app that generates texts using AI, stores them in a database, and provides functionality to manage the stored records.
+Chappie Server is an AI-powered API service that automatically generates and manages repository descriptions for Telegram channels.
 
-I once had the idea to create an app that would manage a Telegram channel by searching for and posting interesting repositories using AI. That idea eventually grew into this project. You can read more details about how the idea was born here: [Part 1](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-1-VywRW) and [Part 2](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-2-X9Yjz). (The articles are in Ukrainian, but I think you’ll manage to translate them into your preferred language.)
+### Key Features
+- AI-powered text generation using Mistral AI
+- Automatic GitHub repository parsing and description generation
+- RESTful API for content management
+- Database storage for generated descriptions
+
+### Technology Stack
+- Go 1.23
+- MariaDB/MySQL
+- Docker & Docker Compose
+- Mistral AI API
+
+## Blog Articles
+Read about the project's journey and development:
+- [How ChatGPT Manages My Telegram Channel - Part 1](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-1-VywRW)
+- [How ChatGPT Manages My Telegram Channel - Part 2](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-2-X9Yjz)
+
+(Articles are in Ukrainian)
+
+## Installation
+
+### Prerequisites
+- Docker v20.10.0 or later
+- Docker Compose v2.0.0 or later
+- Mistral AI API key
 
 ## How to run
 
@@ -56,6 +98,12 @@ git clone https://github.com/Think-Root/chappie_server.git
 ### Config
 create a **.env** file in the app root directory
 
+Before creating the .env file, ensure you have:
+1. Created a Mistral AI account
+2. Generated an API key
+3. Created and configured a Mistral agent
+4. Set up your MariaDB instance
+
 ```properties
 MISTRAL_TOKEN=<mistral api key>
 MISTRAL_AGENT=<get agent api id https://console.mistral.ai/build/agents>
@@ -64,11 +112,20 @@ BEARER_TOKEN=<your token for API protection>
 ```
 
 ### Deploy
-- create network `docker network create chappie_network` (to allow the app access to the database run mariadb in this network)
-- run [mariadb](https://hub.docker.com/_/mariadb) `docker run -d --name mariadb --network chappie_network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest`
-- build `docker build -t chappie_server:latest -f Dockerfile .`
-- run `docker run --name chappie_server --restart always --env-file .env -e TZ=Europe/Kiev --network chappie_network chappie_server:latest`
-- or via docker compose `docker compose up -d`
+1. Create Docker network:
+   ```bash
+   docker network create chappie_network
+   ```
+
+2. Deploy MariaDB:
+   ```bash
+   docker run -d --name mariadb --network chappie_network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest
+   ```
+
+3. Deploy Chappie Server:
+   ```bash
+   docker compose up -d
+   ```
 
 
 ## API
@@ -77,6 +134,8 @@ BEARER_TOKEN=<your token for API protection>
 All API requests must include an Authorization header in the following format: 
 Authorization: Bearer <BEARER_TOKEN>
 ```
+Rate Limit: 100 requests per minute per IP address
+All endpoints return JSON responses with appropriate HTTP status codes
 
 ### /api/manual-generate/
 
@@ -86,12 +145,25 @@ Authorization: Bearer <BEARER_TOKEN>
 
 **Description:** This endpoint is used to manually generate description for a provided repository URL, and add it to the database.
 
+**Curl Example:**
+```bash
+curl -X POST \
+  'http://localhost:9111/think-root/api/manual-generate/' \
+  -H 'Authorization: Bearer your_token' \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://github.com/example/repo"}'
+```
+
 **Request Example:**
 ```json
 {
   "url": "https://github.com/example/repo"
 }
 ```
+**Status Codes:**
+- 200: Success
+- 400: Invalid request
+- 401: Unauthorized
 
 **Response Example:**
 ```json
@@ -113,6 +185,19 @@ Authorization: Bearer <BEARER_TOKEN>
 **Method:** `POST`
 
 **Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database.
+
+**Curl Example:**
+```bash
+curl -X POST \
+  'http://localhost:9111/think-root/api/auto-generate/' \
+  -H 'Authorization: Bearer your_token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "max_repos": 5,
+    "since": "weekly",
+    "spoken_language_code": "en"
+  }'
+```
 
 **Request Example:**
 ```json
@@ -146,6 +231,18 @@ Authorization: Bearer <BEARER_TOKEN>
 **Method:** `POST`
 
 **Description:** This endpoint retrieves a list of repositories based on the provided limit and posted status.
+
+**Curl Example:**
+```bash
+curl -X POST \
+  'http://localhost:9111/think-root/api/get-repository/' \
+  -H 'Authorization: Bearer your_token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "limit": 1,
+    "posted": false
+  }'
+```
 
 **Request Example:**
 ```json
@@ -185,6 +282,19 @@ Authorization: Bearer <BEARER_TOKEN>
 **Method:** `PATCH`
 
 **Description:** This endpoint updates the posted status of a repository identified by its URL.
+
+**Curl Example:**
+```bash
+curl -X PATCH \
+  'http://localhost:9111/think-root/api/update-posted/' \
+  -H 'Authorization: Bearer your_token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://github.com/example/repo",
+    "posted": true
+  }'
+```
+
 **Request Example:**
 ```json
 {
@@ -203,16 +313,49 @@ Authorization: Bearer <BEARER_TOKEN>
 
 ## Contribution
 
-- install [go](https://go.dev/dl/)
-- install [mariadb](https://mariadb.org/download/)
+### Development Setup
+1. Install Go 1.23 or later
+2. Install MariaDB 10.5 or later
+3. Clone the repository
+4. Install dependencies: `go mod download`
 
-### run
-```shell
- go run ./cmd/server/main.go  
-```
+### Running Locally
+1. Set up your .env file
+2. Start MariaDB
+3. Run the server:
+   ```bash
+   go run ./cmd/server/main.go
+   ```
 
-### build
-```shell
+### Building
+```bash
 go build -o chappie_server ./cmd/server/main.go
 ```
+
+### Code Style Guidelines
+- Follow standard Go formatting (gofmt)
+- Document public functions and types
+- Keep functions small and focused
+
+### Pull Request Process
+1. Create a feature branch
+2. Update documentation
+3. Add tests
+4. Submit PR using the PR template
+
+## Security
+
+- All API endpoints require authentication via Bearer token
+- Rate limiting is enabled
+- Database credentials should be kept secure
+- Report security issues via GitHub security advisories
+
+## Troubleshooting
+
+If you encounter issues:
+1. Check logs using `docker logs chappie_server`
+2. Verify database connectivity
+3. Ensure all environment variables are set correctly
+4. Check Mistral AI API status
+5. Open an issue if problem persists
 
