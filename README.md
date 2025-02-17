@@ -146,7 +146,7 @@ All endpoints return JSON responses with appropriate HTTP status codes
 ```bash
 curl -X POST \
   'http://localhost:9111/think-root/api/manual-generate/' \
-  -H 'Authorization: Bearer your_token' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{"url": "https://github.com/example/repo"}'
 ```
@@ -187,7 +187,7 @@ curl -X POST \
 ```bash
 curl -X POST \
   'http://localhost:9111/think-root/api/auto-generate/' \
-  -H 'Authorization: Bearer your_token' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
     "max_repos": 5,
@@ -233,7 +233,7 @@ curl -X POST \
 ```bash
 curl -X POST \
   'http://localhost:9111/think-root/api/get-repository/' \
-  -H 'Authorization: Bearer your_token' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
     "limit": 1,
@@ -284,7 +284,7 @@ curl -X POST \
 ```bash
 curl -X PATCH \
   'http://localhost:9111/think-root/api/update-posted/' \
-  -H 'Authorization: Bearer your_token' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
     "url": "https://github.com/example/repo",
