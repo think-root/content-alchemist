@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/github": "^8.0.0",
+    "semantic-release": "^21.0.0"
+  }
+}
