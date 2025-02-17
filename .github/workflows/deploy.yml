@@ -1,47 +1,17 @@
-name: CI/CD chappie_server
+name: Deploy chappie_server
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Gitleaks Security Scan"]
+    types:
+      - completed
     branches:
       - main
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
 
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          
-      - name: Configure Git
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "lts/*"
-          
-      - name: Install dependencies
-        run: npm install
-        
-      - name: Release
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-release --debug
-
   deploy:
-    needs: release
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -106,13 +76,11 @@ jobs:
             echo "Setting up .env file..."
             echo "${{ secrets.ENV_PROD }}" | base64 --decode > .env
 
-            # Зупинка та видалення існуючого контейнера
             if docker inspect chappie_server >/dev/null 2>&1; then
               echo "Stopping and removing existing container..."
               docker compose down -v --rmi all
             fi
 
-            # Збірка та запуск
             docker compose up -d
 
             echo "Deployment complete!"
