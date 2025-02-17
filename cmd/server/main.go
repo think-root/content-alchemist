@@ -16,6 +16,7 @@ func main() {
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middlewares.RateLimit)
 	r.Use(middlewares.CheckToken)
 
 	r.Post("/think-root/api/manual-generate/", routers.ManualGenerate)
