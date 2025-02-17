@@ -29,10 +29,6 @@
     - [Development Setup](#development-setup)
     - [Running Locally](#running-locally)
     - [Building](#building)
-    - [Code Style Guidelines](#code-style-guidelines)
-    - [Pull Request Process](#pull-request-process)
-  - [Security](#security)
-  - [Troubleshooting](#troubleshooting)
 
 ## Description
 
@@ -331,31 +327,3 @@ curl -X PATCH \
 ```bash
 go build -o chappie_server ./cmd/server/main.go
 ```
-
-### Code Style Guidelines
-- Follow standard Go formatting (gofmt)
-- Document public functions and types
-- Keep functions small and focused
-
-### Pull Request Process
-1. Create a feature branch
-2. Update documentation
-3. Add tests
-4. Submit PR using the PR template
-
-## Security
-
-- All API endpoints require authentication via Bearer token
-- Rate limiting is enabled
-- Database credentials should be kept secure
-- Report security issues via GitHub security advisories
-
-## Troubleshooting
-
-If you encounter issues:
-1. Check logs using `docker logs chappie_server`
-2. Verify database connectivity
-3. Ensure all environment variables are set correctly
-4. Check Mistral AI API status
-5. Open an issue if problem persists
-
