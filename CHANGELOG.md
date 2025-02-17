@@ -1,3 +1,13 @@
+# [1.2.0](https://github.com/Think-Root/chappie_server/compare/v1.1.0...v1.2.0) (2025-02-17)
+
+
+### Features
+
+* add EnvAsInt function to retrieve environment variables as integers ([4dd8c32](https://github.com/Think-Root/chappie_server/commit/4dd8c32db7da2206f250f79b31fb7c1bd6537d77))
+* add rate limiting middleware to server ([bf57eeb](https://github.com/Think-Root/chappie_server/commit/bf57eeba077ab31e2530b2145526afaf383676e6))
+* add RATE_LIMIT configuration variable to config ([160c9d0](https://github.com/Think-Root/chappie_server/commit/160c9d0a0000049bd8bb785f172553edc59dc7a0))
+* implement rate limiting middleware for HTTP requests ([0da1e74](https://github.com/Think-Root/chappie_server/commit/0da1e74e36b3e72c161bb64b5e4001e43323f68c))
+
 # [1.1.0](https://github.com/Think-Root/chappie_server/compare/v1.0.1...v1.1.0) (2025-02-17)
 
 
