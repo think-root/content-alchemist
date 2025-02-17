@@ -17,7 +17,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Install and run Gitleaks
+        run: |
+          wget https://github.com/zricethezav/gitleaks/releases/download/v8.23.3/gitleaks_8.23.3_linux_x64.tar.gz
+          tar -xzf gitleaks_8.23.3_linux_x64.tar.gz
+          ./gitleaks detect --source . -v
