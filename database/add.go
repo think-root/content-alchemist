@@ -4,8 +4,8 @@ import "fmt"
 
 func AddRepositoryToDB(url, text string) error {
 	repository := GithubRepositories{
-		URL:    url,
-		Text:   text,
+		URL:  url,
+		Text: text,
 	}
 	result := DBThinkRoot.Create(&repository)
 	if result.Error != nil {
