@@ -3,6 +3,7 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server)
 [![License](https://img.shields.io/github/license/Think-Root/chappie_server)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server/releases)
+[![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
 
 ## Table of Contents
 
