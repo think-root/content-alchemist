@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/Think-Root/chappie_server)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server/releases)
 [![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
-[![Build Status](https://github.com/Think-Root/chappie_server/workflows/Build/badge.svg)](https://github.com/Think-Root/chappie_server/actions)
+[![Deploy Status](https://github.com/Think-Root/chappie_server/workflows/Deploy%20chappie_server/badge.svg)](https://github.com/Think-Root/chappie_server/actions/workflows/deploy.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Think-Root/chappie_server)](https://goreportcard.com/report/github.com/Think-Root/chappie_server)
 
 ## Table of Contents
