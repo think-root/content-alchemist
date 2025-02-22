@@ -2,7 +2,7 @@ name: Deploy chappie_server
 
 on:
   workflow_run:
-    workflows: ["Gitleaks Security Scan"]
+    workflows: ["Release chappie_server"]
     types:
       - completed
     branches:
@@ -75,6 +75,13 @@ jobs:
 
             echo "Setting up .env file..."
             echo "${{ secrets.ENV_PROD }}" | base64 --decode > .env
+
+            echo "Determining version from Git tags..."
+            export APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+            echo "APP_VERSION: $APP_VERSION"
+
+            echo "Building Docker image with build arg..."
+            docker compose build --build-arg APP_VERSION=$APP_VERSION
 
             if docker inspect chappie_server >/dev/null 2>&1; then
               echo "Stopping and removing existing container..."
