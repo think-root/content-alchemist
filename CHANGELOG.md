@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/Think-Root/chappie_server/compare/v1.2.0...v1.3.0) (2025-02-22)
+
+
+### Features
+
+* add APP_VERSION argument to Docker Compose configuration ([8cf4056](https://github.com/Think-Root/chappie_server/commit/8cf40569af11c82d2fb1a8b13b5f9cd48a076d27))
+* add APP_VERSION argument to Dockerfile for build configuration ([b7c3fc8](https://github.com/Think-Root/chappie_server/commit/b7c3fc8d5fbf58972b9ae981870cf68003e39b3b))
+* update deployment workflow to determine APP_VERSION from Git tags ([b568d84](https://github.com/Think-Root/chappie_server/commit/b568d842a88429b24de253cbb91715b445e66de4))
+
 # [1.2.0](https://github.com/Think-Root/chappie_server/compare/v1.1.0...v1.2.0) (2025-02-17)
 
 
