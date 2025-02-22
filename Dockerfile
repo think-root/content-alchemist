@@ -7,6 +7,9 @@ COPY . .
 EXPOSE 9111
 RUN go build -o chappie_server ./cmd/server/main.go
 
+ARG APP_VERSION=dev
+RUN go build -ldflags="-X 'chappie_server/config.APP_VERSION=${APP_VERSION}'" -o chappie_server ./cmd/server/main.go
+
 # Runtime
 FROM alpine:3.16
 WORKDIR /app
