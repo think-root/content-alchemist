@@ -8,7 +8,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args: APP_VERSION: ${APP_VERSION}
+      args:
+        APP_VERSION: ${APP_VERSION}
     env_file:
       - .env
     environment:
