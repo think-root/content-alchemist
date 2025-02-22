@@ -1,6 +1,6 @@
 package config
 
-const APP_VERSION = "1.2.0"
+const APP_VERSION = "dev"
 const SERVER_PORT = "9111"
 
 var (
