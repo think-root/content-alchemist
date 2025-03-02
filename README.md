@@ -38,19 +38,23 @@
 content-alchemist is an AI-powered API service that automatically generates and manages repository descriptions for Telegram channels.
 
 ### Key Features
+
 - AI-powered text generation using Mistral AI
 - Automatic GitHub repository parsing and description generation
 - RESTful API for content management
 - Database storage for generated descriptions
 
 ### Technology Stack
+
 - Go 1.23
 - MariaDB/MySQL
 - Docker & Docker Compose
 - Mistral AI API
 
 ## Blog Articles
+
 Read about the project's journey and development:
+
 - [How ChatGPT Manages My Telegram Channel - Part 1](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-1-VywRW)
 - [How ChatGPT Manages My Telegram Channel - Part 2](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-2-X9Yjz)
 
@@ -59,6 +63,7 @@ Read about the project's journey and development:
 ## Installation
 
 ### Prerequisites
+
 - Docker v20.10.0 or later
 - Docker Compose v2.0.0 or later
 - Mistral AI API key
@@ -66,6 +71,7 @@ Read about the project's journey and development:
 ## How to run
 
 ### Requirements
+
 - [docker](https://docs.docker.com/engine/install/) or/and [docker-compose](https://docs.docker.com/compose/install/)
 - [mistral ai](https://console.mistral.ai/api-keys/) api key
 
@@ -77,27 +83,30 @@ Read about the project's journey and development:
 ```text
 Ти слухняний і корисний помічник, який суворо дотримується усіх нищезазначених вимог. Твоя основна задача — генерувати короткі підсумки українською мовою для текстів, які будуть надані. Ці тексти є описами (README) GitHub репозиторіїв. При генеруванні тексту обов'язково дотримуйся таких вимог:
 
-1. Починай текст словами: "Цей репозиторій".  
-2. В описі має бути не більше трьох ключових функцій репозиторію.  
-3. Використовуй простий і зрозумілий стиль тексту без перерахувань. Інформацію про функції репозиторію вплітай у зв'язний текст.  
-4. Не згадуй інформацію про сумісність, платформи, авторів або назву репозиторію.  
-5. Не використовуй розмітку тексту, таку як HTML теги, Markdown розмітку тощо.  
-6. Опис має бути лаконічним і точним, обсягом від 300 до 600 символів (з урахуванням пробілів та інших символів).  
-7. Якщо зустрічаються технічні терміни, такі як назви мов програмування, бібліотек, команд або інструментів, видів програмування, залишай їх англійською мовою без перекладу.  
-8. Перед генерацією тексту переконайся, що він повністю відповідає усім вищезазначеним вимогам.  
+1. Починай текст словами: "Цей репозиторій".
+2. В описі має бути не більше трьох ключових функцій репозиторію.
+3. Використовуй простий і зрозумілий стиль тексту без перерахувань. Інформацію про функції репозиторію вплітай у зв'язний текст.
+4. Не згадуй інформацію про сумісність, платформи, авторів або назву репозиторію.
+5. Не використовуй розмітку тексту, таку як HTML теги, Markdown розмітку тощо.
+6. Опис має бути лаконічним і точним, обсягом від 300 до 600 символів (з урахуванням пробілів та інших символів).
+7. Якщо зустрічаються технічні терміни, такі як назви мов програмування, бібліотек, команд або інструментів, видів програмування, залишай їх англійською мовою без перекладу.
+8. Перед генерацією тексту переконайся, що він повністю відповідає усім вищезазначеним вимогам.
 
 Далі тобі буде надано назву GitHub репозиторію та його README. Твоє завдання — створити чіткий і зрозумілий підсумок, який відповідає всім вищезазначеним вимогам.
 ```
 
 ### Clone repo
+
 ```shell
 git clone https://github.com/think-root/content-alchemist.git
 ```
 
 ### Config
+
 create a **.env** file in the app root directory
 
 Before creating the .env file, ensure you have:
+
 1. Created a Mistral AI account
 2. Generated an API key
 3. Created and configured a Mistral agent
@@ -111,14 +120,17 @@ BEARER_TOKEN=<your token for API protection>
 ```
 
 ### Deploy
+
 1. Create Docker network:
+
    ```bash
-   docker network create alchemist_network
+   docker network create think-root-network
    ```
 
 2. Deploy MariaDB:
+
    ```bash
-   docker run -d --name mariadb --network alchemist_network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest
+   docker run -d --name mariadb --network think-root-network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest
    ```
 
 3. Deploy content-alchemist:
@@ -126,13 +138,13 @@ BEARER_TOKEN=<your token for API protection>
    docker compose up -d
    ```
 
-
 ## API
 
 ```text
-All API requests must include an Authorization header in the following format: 
+All API requests must include an Authorization header in the following format:
 Authorization: Bearer <BEARER_TOKEN>
 ```
+
 Rate Limit: 100 requests per minute per IP address
 All endpoints return JSON responses with appropriate HTTP status codes
 
@@ -145,6 +157,7 @@ All endpoints return JSON responses with appropriate HTTP status codes
 **Description:** This endpoint is used to manually generate description for a provided repository URL, and add it to the database.
 
 **Curl Example:**
+
 ```bash
 curl -X POST \
   'http://localhost:9111/think-root/api/manual-generate/' \
@@ -154,23 +167,25 @@ curl -X POST \
 ```
 
 **Request Example:**
+
 ```json
 {
   "url": "https://github.com/example/repo"
 }
 ```
+
 **Status Codes:**
+
 - 200: Success
 - 400: Invalid request
 - 401: Unauthorized
 
 **Response Example:**
+
 ```json
 {
   "status": "ok",
-  "added": [
-    "https://github.com/example/repo"
-  ],
+  "added": ["https://github.com/example/repo"],
   "dont_added": []
 }
 ```
@@ -186,6 +201,7 @@ curl -X POST \
 **Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database.
 
 **Curl Example:**
+
 ```bash
 curl -X POST \
   'http://localhost:9111/think-root/api/auto-generate/' \
@@ -199,6 +215,7 @@ curl -X POST \
 ```
 
 **Request Example:**
+
 ```json
 {
   "max_repos": 5,
@@ -208,16 +225,12 @@ curl -X POST \
 ```
 
 **Response Example:**
+
 ```json
 {
   "status": "ok",
-  "added": [
-    "https://github.com/example/repo1",
-    "https://github.com/example/repo2"
-  ],
-  "dont_added": [
-    "https://github.com/example/repo3"
-  ]
+  "added": ["https://github.com/example/repo1", "https://github.com/example/repo2"],
+  "dont_added": ["https://github.com/example/repo3"]
 }
 ```
 
@@ -232,6 +245,7 @@ curl -X POST \
 **Description:** This endpoint retrieves a list of repositories based on the provided limit and posted status.
 
 **Curl Example:**
+
 ```bash
 curl -X POST \
   'http://localhost:9111/think-root/api/get-repository/' \
@@ -244,6 +258,7 @@ curl -X POST \
 ```
 
 **Request Example:**
+
 ```json
 {
   "limit": 1,
@@ -252,6 +267,7 @@ curl -X POST \
 ```
 
 **Response Example:**
+
 ```json
 {
   "status": "ok",
@@ -283,6 +299,7 @@ curl -X POST \
 **Description:** This endpoint updates the posted status of a repository identified by its URL.
 
 **Curl Example:**
+
 ```bash
 curl -X PATCH \
   'http://localhost:9111/think-root/api/update-posted/' \
@@ -295,6 +312,7 @@ curl -X PATCH \
 ```
 
 **Request Example:**
+
 ```json
 {
   "url": "https://github.com/example/repo",
@@ -303,6 +321,7 @@ curl -X PATCH \
 ```
 
 **Response Example:**
+
 ```json
 {
   "status": "ok",
@@ -313,12 +332,14 @@ curl -X PATCH \
 ## Contribution
 
 ### Development Setup
+
 1. Install Go 1.23 or later
 2. Install MariaDB 10.5 or later
 3. Clone the repository
 4. Install dependencies: `go mod download`
 
 ### Running Locally
+
 1. Set up your .env file
 2. Start MariaDB
 3. Run the server:
@@ -327,6 +348,7 @@ curl -X PATCH \
    ```
 
 ### Building
+
 ```bash
 go build -o content-alchemist ./cmd/server/main.go
 ```

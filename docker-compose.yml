@@ -15,8 +15,8 @@ services:
     environment:
       TZ: Europe/Kiev
     networks:
-      - alchemist_network
+      - think-root-network
 
 networks:
-  alchemist_network:
+  think-root-network:
     external: true
