@@ -2,7 +2,7 @@ package llm
 
 import (
 	"bytes"
-	"chappie_server/config"
+	"content-alchemist/config"
 	"encoding/json"
 	"fmt"
 	"io"

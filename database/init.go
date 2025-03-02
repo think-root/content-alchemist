@@ -1,7 +1,7 @@
 package database
 
 import (
-	"chappie_server/config"
+	"content-alchemist/config"
 	"log"
 
 	"gorm.io/driver/mysql"

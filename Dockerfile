@@ -6,11 +6,11 @@ RUN go mod download
 COPY . .
 EXPOSE 9111
 ARG APP_VERSION=dev
-RUN go build -ldflags="-X 'chappie_server/config.APP_VERSION=${APP_VERSION}'" -o chappie_server ./cmd/server/main.go
+RUN go build -ldflags="-X 'content-alchemist/config.APP_VERSION=${APP_VERSION}'" -o content-alchemist ./cmd/server/main.go
 
 # Runtime
 FROM alpine:3.16
 WORKDIR /app
-COPY --from=builder /app/chappie_server .
+COPY --from=builder /app/content-alchemist .
 COPY .env /app/.env
-CMD ["./chappie_server"]
+CMD ["./content-alchemist"]

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"chappie_server/config"
+	"content-alchemist/config"
 	"net/http"
 	"strings"
 )

@@ -1,10 +1,10 @@
 services:
-  chappie_server:
-    container_name: chappie_server
+  content-alchemist:
+    container_name: content-alchemist
     restart: always
     ports:
       - "127.0.0.1:9111:9111"
-    image: chappie_server:latest
+    image: content-alchemist:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,8 +15,8 @@ services:
     environment:
       TZ: Europe/Kiev
     networks:
-      - chappie_network
+      - alchemist_network
 
 networks:
-  chappie_network:
+  alchemist_network:
     external: true

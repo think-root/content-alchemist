@@ -1,8 +1,8 @@
-name: Deploy chappie_server
+name: Deploy content-alchemist
 
 on:
   workflow_run:
-    workflows: ["Release chappie_server"]
+    workflows: ["Release content-alchemist"]
     types:
       - completed
     branches:
@@ -83,7 +83,7 @@ jobs:
             echo "Building Docker image with build arg..."
             docker compose build --build-arg APP_VERSION=$APP_VERSION
 
-            if docker inspect chappie_server >/dev/null 2>&1; then
+            if docker inspect content-alchemist >/dev/null 2>&1; then
               echo "Stopping and removing existing container..."
               docker compose down -v --rmi all
             fi

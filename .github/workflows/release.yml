@@ -1,4 +1,4 @@
-name: Release chappie_server
+name: Release content-alchemist
 
 on:
   workflow_run:

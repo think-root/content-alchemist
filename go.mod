@@ -1,4 +1,4 @@
-module chappie_server
+module content-alchemist
 
 go 1.23
 

@@ -1,15 +1,15 @@
-# Chappie Server
+# content-alchemist
 
-[![Go Version](https://img.shields.io/github/go-mod/go-version/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server)
-[![License](https://img.shields.io/github/license/Think-Root/chappie_server)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/Think-Root/chappie_server)](https://github.com/Think-Root/chappie_server/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
+[![License](https://img.shields.io/github/license/think-root/content-alchemist)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
 [![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
-[![Deploy Status](https://github.com/Think-Root/chappie_server/workflows/Deploy%20chappie_server/badge.svg)](https://github.com/Think-Root/chappie_server/actions/workflows/deploy.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Think-Root/chappie_server)](https://goreportcard.com/report/github.com/Think-Root/chappie_server)
+[![Deploy Status](https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/think-root/content-alchemist)](https://goreportcard.com/report/github.com/think-root/content-alchemist)
 
 ## Table of Contents
 
-- [Chappie Server](#chappie-server)
+- [content-alchemist](#content-alchemist)
   - [Table of Contents](#table-of-contents)
   - [Description](#description)
     - [Key Features](#key-features)
@@ -35,7 +35,7 @@
 
 ## Description
 
-Chappie Server is an AI-powered API service that automatically generates and manages repository descriptions for Telegram channels.
+content-alchemist is an AI-powered API service that automatically generates and manages repository descriptions for Telegram channels.
 
 ### Key Features
 - AI-powered text generation using Mistral AI
@@ -91,7 +91,7 @@ Read about the project's journey and development:
 
 ### Clone repo
 ```shell
-git clone https://github.com/Think-Root/chappie_server.git
+git clone https://github.com/think-root/content-alchemist.git
 ```
 
 ### Config
@@ -113,15 +113,15 @@ BEARER_TOKEN=<your token for API protection>
 ### Deploy
 1. Create Docker network:
    ```bash
-   docker network create chappie_network
+   docker network create alchemist_network
    ```
 
 2. Deploy MariaDB:
    ```bash
-   docker run -d --name mariadb --network chappie_network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest
+   docker run -d --name mariadb --network alchemist_network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest
    ```
 
-3. Deploy Chappie Server:
+3. Deploy content-alchemist:
    ```bash
    docker compose up -d
    ```
@@ -328,5 +328,5 @@ curl -X PATCH \
 
 ### Building
 ```bash
-go build -o chappie_server ./cmd/server/main.go
+go build -o content-alchemist ./cmd/server/main.go
 ```

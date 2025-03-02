@@ -1,6 +1,6 @@
 {
   "branches": ["main"],
-  "repositoryUrl": "https://github.com/Think-Root/chappie_server.git",
+  "repositoryUrl": "https://github.com/think-root/content-alchemist.git",
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
