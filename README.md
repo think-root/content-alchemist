@@ -1,50 +1,15 @@
 <h1 align="center">Content Alchemist</h1>
 
+[![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
+[![License](https://img.shields.io/github/license/think-root/content-alchemist)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
+[![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
+[![Deploy Status](https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/think-root/content-alchemist)](https://goreportcard.com/report/github.com/think-root/content-alchemist)
+
 <div align="center">
-  <a href="https://github.com/think-root/content-alchemist">
-    <img src="https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist" alt="Go Version">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/think-root/content-alchemist" alt="License">
-  </a>
-  <a href="https://github.com/think-root/content-alchemist/releases">
-    <img src="https://img.shields.io/github/v/release/think-root/content-alchemist" alt="Version">
-  </a>
-  <a href="CHANGELOG.md">
-    <img src="https://img.shields.io/badge/changelog-view-blue" alt="Changelog">
-  </a>
-  <a href="https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml">
-    <img src="https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg" alt="Deploy Status">
-  </a>
-  <a href="https://goreportcard.com/report/github.com/think-root/content-alchemist">
-    <img src="https://goreportcard.com/badge/github.com/think-root/content-alchemist" alt="Go Report Card">
-  </a>
     <img src="baner.png" alt="baner">
 </div>
-
-## Table of Contents
-
-  - [Description](#description)
-    - [Key Features](#key-features)
-    - [Technology Stack](#technology-stack)
-  - [Blog Articles](#blog-articles)
-  - [Installation](#installation)
-    - [Prerequisites](#prerequisites)
-  - [How to run](#how-to-run)
-    - [Requirements](#requirements)
-    - [Preparation](#preparation)
-    - [Clone repo](#clone-repo)
-    - [Config](#config)
-    - [Deploy](#deploy)
-  - [API](#api)
-    - [/api/manual-generate/](#apimanual-generate)
-    - [/api/auto-generate/](#apiauto-generate)
-    - [/api/get-repository/](#apiget-repository)
-    - [/api/update-posted/](#apiupdate-posted)
-  - [Contribution](#contribution)
-    - [Development Setup](#development-setup)
-    - [Running Locally](#running-locally)
-    - [Building](#building)
 
 ## Description
 
