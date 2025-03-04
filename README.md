@@ -1,18 +1,29 @@
-# content-alchemist
+<h1 align="center">Content Alchemist</h1>
 
-![baner](baner.png)
-
-[![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
-[![License](https://img.shields.io/github/license/think-root/content-alchemist)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
-[![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
-[![Deploy Status](https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/think-root/content-alchemist)](https://goreportcard.com/report/github.com/think-root/content-alchemist)
+<div align="center">
+  <a href="https://github.com/think-root/content-alchemist">
+    <img src="https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist" alt="Go Version">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/think-root/content-alchemist" alt="License">
+  </a>
+  <a href="https://github.com/think-root/content-alchemist/releases">
+    <img src="https://img.shields.io/github/v/release/think-root/content-alchemist" alt="Version">
+  </a>
+  <a href="CHANGELOG.md">
+    <img src="https://img.shields.io/badge/changelog-view-blue" alt="Changelog">
+  </a>
+  <a href="https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml">
+    <img src="https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg" alt="Deploy Status">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/think-root/content-alchemist">
+    <img src="https://goreportcard.com/badge/github.com/think-root/content-alchemist" alt="Go Report Card">
+  </a>
+    <img src="baner.png" alt="baner">
+</div>
 
 ## Table of Contents
 
-- [content-alchemist](#content-alchemist)
-  - [Table of Contents](#table-of-contents)
   - [Description](#description)
     - [Key Features](#key-features)
     - [Technology Stack](#technology-stack)
