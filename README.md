@@ -64,15 +64,6 @@ content-alchemist is an AI-powered API service that automatically generates and 
 - Docker & Docker Compose
 - Mistral AI API
 
-## Blog Articles
-
-Read about the project's journey and development:
-
-- [How ChatGPT Manages My Telegram Channel - Part 1](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-1-VywRW)
-- [How ChatGPT Manages My Telegram Channel - Part 2](https://drukarnia.com.ua/articles/yak-chatgpt-vede-za-mene-kanal-v-telegram-i-u-nogo-ce-maizhe-vikhodit-chastina-2-X9Yjz)
-
-(Articles are in Ukrainian)
-
 ## Installation
 
 ### Prerequisites
