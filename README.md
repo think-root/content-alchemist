@@ -1,5 +1,7 @@
 <h1 align="center">Content Alchemist</h1>
 
+<div align="center">
+
 [![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
 [![License](https://img.shields.io/github/license/think-root/content-alchemist)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
@@ -7,8 +9,8 @@
 [![Deploy Status](https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/think-root/content-alchemist)](https://goreportcard.com/report/github.com/think-root/content-alchemist)
 
-<div align="center">
-    <img src="baner.png" alt="baner">
+<img src="baner.png" alt="baner">
+
 </div>
 
 ## Description
