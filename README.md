@@ -15,7 +15,7 @@
 
 ## Description
 
-content-alchemist is an AI-powered API service that automatically generates and allows to manage interesting GitHub repositories.
+content-alchemist is an API server that allows you to automatically generate repository descriptions from GitHub trends, manually generate descriptions for provided repositories, and also view existing repositories and their descriptions.
 
 ### Key Features
 
