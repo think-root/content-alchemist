@@ -6,18 +6,23 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 type getRepositoryRequestBody struct {
-	Limit  int  `json:"limit"`
-	Posted bool `json:"posted"`
+	Limit     int    `json:"limit"`
+	Posted    bool   `json:"posted"`
+	SortBy    string `json:"sort_by"`
+	SortOrder string `json:"sort_order"`
 }
 
 type getRepositoryItem struct {
-	ID     int    `json:"id"`
-	Posted bool   `json:"posted"`
-	URL    string `json:"url"`
-	Text   string `json:"text"`
+	ID         int        `json:"id"`
+	Posted     bool       `json:"posted"`
+	URL        string     `json:"url"`
+	Text       string     `json:"text"`
+	DateAdded  *time.Time `json:"date_added"`
+	DatePosted *time.Time `json:"date_posted"`
 }
 
 type getRepositoryResponse struct {
@@ -55,7 +60,16 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repositories, err := database.GetRepository(reqBody.Limit, &reqBody.Posted)
+	sortBy := reqBody.SortBy
+	if sortBy == "" {
+		if reqBody.Posted {
+			sortBy = "date_posted"
+		} else {
+			sortBy = "date_added"
+		}
+	}
+	
+	repositories, err := database.GetRepository(reqBody.Limit, &reqBody.Posted, sortBy, reqBody.SortOrder)
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
 		server.RespondJSON(w, http.StatusInternalServerError, "error", "Failed to fetch repositories", nil)
@@ -64,7 +78,14 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]getRepositoryItem, len(repositories))
 	for i, repo := range repositories {
-		items[i] = getRepositoryItem{repo.ID, repo.Posted, repo.URL, repo.Text}
+		items[i] = getRepositoryItem{
+			ID:         repo.ID,
+			Posted:     repo.Posted,
+			URL:        repo.URL,
+			Text:       repo.Text,
+			DateAdded:  repo.DateAdded,
+			DatePosted: repo.DatePosted,
+		}
 	}
 
 	payload := &getRepositoryResponse{
