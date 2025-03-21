@@ -3,6 +3,7 @@ package database
 import (
 	"content-alchemist/config"
 	"log"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -13,10 +14,12 @@ var dsnThinkRoot = config.DB_CONNECTION +
 var DBThinkRoot *gorm.DB
 
 type GithubRepositories struct {
-	ID     int    `gorm:"column:id;primaryKey;autoIncrement"`
-	URL    string `gorm:"column:url;type:text;not null"`
-	Text   string `gorm:"column:text;type:text;not null"`
-	Posted bool   `gorm:"column:posted;type:tinyint;not null;default:0"`
+	ID         int        `gorm:"column:id;primaryKey;autoIncrement"`
+	URL        string     `gorm:"column:url;type:text;not null"`
+	Text       string     `gorm:"column:text;type:text;not null"`
+	Posted     bool       `gorm:"column:posted;type:tinyint;not null;default:0"`
+	DateAdded  *time.Time `gorm:"column:date_added;type:datetime"`
+	DatePosted *time.Time `gorm:"column:date_posted;type:datetime"`
 }
 
 func (GithubRepositories) TableName() string {
