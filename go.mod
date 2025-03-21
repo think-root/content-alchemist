@@ -1,8 +1,6 @@
 module content-alchemist
 
-go 1.23
-
-toolchain go1.23.5
+go 1.24.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.1
