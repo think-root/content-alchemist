@@ -212,7 +212,7 @@ curl -X POST \
 
 **Method:** `POST`
 
-**Description:** This endpoint retrieves a list of repositories based on the provided limit and posted status.
+**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates.
 
 **Curl Example:**
 
@@ -223,18 +223,40 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
     "limit": 1,
-    "posted": false
+    "posted": false,
+    "sort_by": "date_added",
+    "sort_order": "DESC"
   }'
 ```
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | integer | No | Maximum number of repositories to return. Set to 0 for no limit. |
+| `posted` | boolean | No | Filter repositories by posted status. |
+| `sort_by` | string | No | Field to sort results by. Valid values: `id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
+| `sort_order` | string | No | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`. |
 
 **Request Example:**
 
 ```json
 {
   "limit": 1,
-  "posted": false
+  "posted": false,
+  "sort_by": "date_added",
+  "sort_order": "DESC"
 }
 ```
+
+**Sorting Behavior:**
+
+- When sorting by `date_posted`:
+  - If `sort_order` = `ASC`: entries with null values are shown first, followed by dates in ascending order
+  - If `sort_order` = `DESC`: entries with dates are shown in descending order first, followed by those with null values
+- When sorting by `date_added` or `id`: standard ascending or descending sort
+- If `sort_by` is not specified, `date_posted` is used for posted=true and `date_added` for posted=false
+- If `sort_order` is not specified, `DESC` is used as default
 
 **Response Example:**
 
@@ -248,10 +270,12 @@ curl -X POST \
     "unposted": 30,
     "items": [
       {
-        "id": "1",
+        "id": 1,
         "posted": false,
         "url": "https://github.com/example/repo",
-        "text": "Repository description here."
+        "text": "Repository description here.",
+        "date_added": "2025-03-20T15:30:45Z",
+        "date_posted": null
       }
     ]
   }
