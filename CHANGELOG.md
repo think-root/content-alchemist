@@ -1,3 +1,14 @@
+# [1.4.0](https://github.com/think-root/content-alchemist/compare/v1.3.0...v1.4.0) (2025-03-21)
+
+
+### Features
+
+* add DateAdded field to repository entry in database ([7480505](https://github.com/think-root/content-alchemist/commit/7480505fca26cae409ad6d01f82e1686bc9c0eb0))
+* add DatePosted field to GithubRepositories model for enhanced date tracking ([66f9edd](https://github.com/think-root/content-alchemist/commit/66f9eddeeba51441b5d8f735e1cce2094bb74f1f))
+* enhance GetRepository function to support sorting by date and include DateAdded and DatePosted in response ([e1768d8](https://github.com/think-root/content-alchemist/commit/e1768d859b985ef79a63697f8f5bd8d181ec4edd))
+* enhance GetRepository function to support sorting by date posted, date added, or id with order options ([81c3156](https://github.com/think-root/content-alchemist/commit/81c3156c06719382dec2fda93d09598c57a33126))
+* update UpdatePostedStatusByURL to set DatePosted when repository is marked as posted ([99f6c68](https://github.com/think-root/content-alchemist/commit/99f6c68a97e918653916b22231286f45fac62b3d))
+
 # [1.3.0](https://github.com/think-root/content-alchemist/compare/v1.2.0...v1.3.0) (2025-02-22)
 
 ### Features
