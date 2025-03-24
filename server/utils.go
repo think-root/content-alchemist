@@ -19,6 +19,9 @@ func RespondJSON(w http.ResponseWriter, status int, statusMsg, message string, d
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(response)
 }
