@@ -1,3 +1,12 @@
+# [1.5.0](https://github.com/think-root/content-alchemist/compare/v1.4.0...v1.5.0) (2025-03-24)
+
+
+### Features
+
+* add CORS headers to API responses ([428f6b4](https://github.com/think-root/content-alchemist/commit/428f6b4840fe29f23907fb291f2ba8b07c29e349))
+* add CORS middleware ([589a2b1](https://github.com/think-root/content-alchemist/commit/589a2b1066fca05786e8f37aadc492b9dcba8358))
+* add CORS middleware to server ([c74aabf](https://github.com/think-root/content-alchemist/commit/c74aabf300a96934b2d186aecf899b3794c67279))
+
 # [1.4.0](https://github.com/think-root/content-alchemist/compare/v1.3.0...v1.4.0) (2025-03-21)
 
 
