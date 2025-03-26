@@ -3,7 +3,6 @@
 <div align="center">
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
-[![License](https://img.shields.io/github/license/think-root/content-alchemist)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
 [![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
 [![Deploy Status](https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
@@ -15,14 +14,15 @@
 
 ## Description
 
-content-alchemist is an API server that allows you to automatically generate repository descriptions from GitHub trends, manually generate descriptions for provided repositories, and also view existing repositories and their descriptions.
+This is a ready-made solution in the form of an API server that allows you to generate and store social media posts containing descriptions of GitHub repositories. It is an standalone solution for which you can write your own utility to manage it, or use ready-made solutions that you can find in the repositories of this organization.
 
 ### Key Features
 
-- AI-powered text generation using Mistral AI
-- Automatic GitHub repository parsing and description generation
+- RESTful API for automatic generation of repository descriptions based on GitHub trends
+- RESTful API for manual generation of repository descriptions by specifying the repository URL
 - RESTful API for content management
-- Database storage for generated descriptions
+- Database storage
+
 
 ### Technology Stack
 
