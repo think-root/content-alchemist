@@ -11,7 +11,7 @@ import (
 
 type getRepositoryRequestBody struct {
 	Limit     int    `json:"limit"`
-	Posted    bool   `json:"posted"`
+	Posted    *bool  `json:"posted"`
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"`
 }
@@ -62,14 +62,14 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 
 	sortBy := reqBody.SortBy
 	if sortBy == "" {
-		if reqBody.Posted {
+		if reqBody.Posted != nil && *reqBody.Posted {
 			sortBy = "date_posted"
 		} else {
 			sortBy = "date_added"
 		}
 	}
-	
-	repositories, err := database.GetRepository(reqBody.Limit, &reqBody.Posted, sortBy, reqBody.SortOrder)
+
+	repositories, err := database.GetRepository(reqBody.Limit, reqBody.Posted, sortBy, reqBody.SortOrder)
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
 		server.RespondJSON(w, http.StatusInternalServerError, "error", "Failed to fetch repositories", nil)
