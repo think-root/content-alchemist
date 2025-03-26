@@ -14,6 +14,8 @@ type getRepositoryRequestBody struct {
 	Posted    *bool  `json:"posted"`
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"`
+	Page      int    `json:"page"`
+	PageSize  int    `json:"page_size"`
 }
 
 type getRepositoryItem struct {
@@ -26,10 +28,14 @@ type getRepositoryItem struct {
 }
 
 type getRepositoryResponse struct {
-	All      int                 `json:"all"`
-	Posted   int                 `json:"posted"`
-	Unposted int                 `json:"unposted"`
-	Items    []getRepositoryItem `json:"items"`
+	All        int                 `json:"all"`
+	Posted     int                 `json:"posted"`
+	Unposted   int                 `json:"unposted"`
+	Items      []getRepositoryItem `json:"items"`
+	Page       int                 `json:"page"`
+	PageSize   int                 `json:"page_size"`
+	TotalPages int                 `json:"total_pages"`
+	TotalItems int                 `json:"total_items"`
 }
 
 var trueVal = true
@@ -53,6 +59,17 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	paginationRequested := reqBody.Page > 0 || reqBody.PageSize > 0
+
+	if paginationRequested || reqBody.Limit > 0 {
+		if reqBody.Page < 1 {
+			reqBody.Page = 1
+		}
+		if reqBody.PageSize < 1 {
+			reqBody.PageSize = 10
+		}
+	}
+
 	all, posted, unposted, err := countRepositories()
 	if err != nil {
 		log.Printf("Error counting repositories: %v", err)
@@ -69,7 +86,17 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	repositories, err := database.GetRepository(reqBody.Limit, reqBody.Posted, sortBy, reqBody.SortOrder)
+	var offset int
+	limit := reqBody.Limit
+
+	if paginationRequested || limit > 0 {
+		offset = (reqBody.Page - 1) * reqBody.PageSize
+		if limit == 0 {
+			limit = reqBody.PageSize
+		}
+	}
+
+	repositories, totalItems, err := database.GetRepository(limit, offset, reqBody.Posted, sortBy, reqBody.SortOrder)
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
 		server.RespondJSON(w, http.StatusInternalServerError, "error", "Failed to fetch repositories", nil)
@@ -88,11 +115,22 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var totalPages int
+	if paginationRequested || limit > 0 {
+		totalPages = (totalItems + reqBody.PageSize - 1) / reqBody.PageSize
+	} else {
+		totalPages = 1
+	}
+
 	payload := &getRepositoryResponse{
-		All:      all,
-		Posted:   posted,
-		Unposted: unposted,
-		Items:    items,
+		All:        all,
+		Posted:     posted,
+		Unposted:   unposted,
+		Items:      items,
+		Page:       reqBody.Page,
+		PageSize:   reqBody.PageSize,
+		TotalPages: totalPages,
+		TotalItems: totalItems,
 	}
 	server.RespondJSON(w, http.StatusOK, "ok", "Repositories fetched successfully", payload)
 }

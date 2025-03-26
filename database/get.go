@@ -4,17 +4,22 @@ import (
 	"fmt"
 )
 
-func GetRepository(limit int, posted *bool, sortBy string, sortOrder string) ([]GithubRepositories, error) {
+func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder string) ([]GithubRepositories, int, error) {
 	var repositories []GithubRepositories
+	var totalCount int64
 
 	query := DBThinkRoot.Model(&GithubRepositories{})
-	
+
 	if posted != nil {
 		query = query.Where("posted = ?", *posted)
 	}
-	
+
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, 0, fmt.Errorf("error counting total repositories: %v", err)
+	}
+
 	orderBy := "id DESC"
-	
+
 	switch sortBy {
 	case "date_posted":
 		if sortOrder == "ASC" {
@@ -35,17 +40,21 @@ func GetRepository(limit int, posted *bool, sortBy string, sortOrder string) ([]
 			orderBy = "id DESC"
 		}
 	}
-	
+
 	query = query.Order(orderBy)
-	
+
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
 
 	result := query.Find(&repositories)
 	if result.Error != nil {
-		return nil, fmt.Errorf("error fetching repositories from DB: %v", result.Error)
+		return nil, 0, fmt.Errorf("error fetching repositories from DB: %v", result.Error)
 	}
 
-	return repositories, nil
+	return repositories, int(totalCount), nil
 }
