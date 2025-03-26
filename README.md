@@ -234,8 +234,8 @@ curl -X POST \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `limit` | integer | No | Maximum number of repositories to return. Set to 0 for no limit. |
-| `posted` | boolean | No | Filter repositories by posted status. |
+| `limit` | integer | No | Maximum number of repositories to return. Set to 0 for no limit. When limit is 0 and posted is not specified, returns all records regardless of posted status. |
+| `posted` | boolean | No | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status. |
 | `sort_by` | string | No | Field to sort results by. Valid values: `id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
 | `sort_order` | string | No | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`. |
 
@@ -243,8 +243,8 @@ curl -X POST \
 
 ```json
 {
-  "limit": 1,
-  "posted": false,
+  "limit": 0,
+  "posted": null,
   "sort_by": "date_added",
   "sort_order": "DESC"
 }
