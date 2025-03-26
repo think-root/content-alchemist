@@ -1,3 +1,4 @@
 .env
 .env.prod
 .air.toml
+/tmp/
