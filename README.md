@@ -234,13 +234,16 @@ curl -X POST \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `limit` | integer | No | Maximum number of repositories to return. Set to 0 for no limit. When limit is 0 and posted is not specified, returns all records regardless of posted status. |
+| `limit` | integer | No | Maximum number of repositories to return. Set to 0 to either return all records (if page and page_size are not specified) or use pagination mode (if page or page_size are specified). |
 | `posted` | boolean | No | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status. |
 | `sort_by` | string | No | Field to sort results by. Valid values: `id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
 | `sort_order` | string | No | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`. |
+| `page` | integer | No | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination. |
+| `page_size` | integer | No | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination. |
 
-**Request Example:**
+**Request Examples:**
 
+1. Get all records without pagination:
 ```json
 {
   "limit": 0,
@@ -249,6 +252,43 @@ curl -X POST \
   "sort_order": "DESC"
 }
 ```
+
+2. Get records with pagination:
+```json
+{
+  "limit": 0,
+  "posted": null,
+  "sort_by": "date_added",
+  "sort_order": "DESC",
+  "page": 1,
+  "page_size": 10
+}
+```
+
+3. Get limited number of records:
+```json
+{
+  "limit": 5,
+  "posted": true,
+  "sort_by": "date_posted",
+  "sort_order": "DESC"
+}
+```
+
+**Pagination Details:**
+- When `limit` is 0:
+  - If neither `page` nor `page_size` are specified, returns all matching records without pagination
+  - If either `page` or `page_size` are specified, uses pagination mode
+- When `limit` > 0:
+  - Uses the specified limit with pagination
+  - Default page size is 10 if not specified
+- Response always includes:
+  - `page`: Current page number (1 when returning all records)
+  - `page_size`: Number of items per page (equal to total items when returning all records)
+  - `total_pages`: Total number of pages (1 when returning all records)
+  - `total_items`: Total number of items matching the query
+- If `page` is less than 1, it defaults to 1
+- If `page_size` is less than 1, it defaults to 10
 
 **Sorting Behavior:**
 
@@ -278,7 +318,11 @@ curl -X POST \
         "date_added": "2025-03-20T15:30:45Z",
         "date_posted": null
       }
-    ]
+    ],
+    "page": 1,
+    "page_size": 10,
+    "total_pages": 5,
+    "total_items": 50
   }
 }
 ```
