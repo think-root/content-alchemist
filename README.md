@@ -2,6 +2,7 @@
 
 <div align="center">
 
+![License](https://img.shields.io/github/license/think-root/content-alchemist?style=flat-square)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
 [![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
 [![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
@@ -14,7 +15,7 @@
 
 ## Description
 
-This is a ready-made solution in the form of an API server that allows you to generate and store social media posts containing descriptions of GitHub repositories. It is an standalone solution for which you can write your own utility to manage it, or use ready-made solutions that you can find in the repositories of this organization.
+This is a ready-made solution in the form of an API server that generates social media posts containing descriptions of GitHub repositories using [AI](https://mistral.ai/) 🤖 and stores them for later use. It is a standalone solution that you can manage using your own utility or by leveraging existing tools available in this organization's repositories, for example [content-maestro](https://github.com/think-root/content-maestro)
 
 ### Key Features
 
@@ -29,7 +30,7 @@ This is a ready-made solution in the form of an API server that allows you to ge
 - Go 1.23
 - MariaDB/MySQL
 - Docker & Docker Compose
-- Mistral AI API
+- Mistral AI [API](https://docs.mistral.ai/api/)
 
 ## Installation
 
