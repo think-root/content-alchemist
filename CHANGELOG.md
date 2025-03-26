@@ -1,3 +1,15 @@
+# [1.6.0](https://github.com/think-root/content-alchemist/compare/v1.5.0...v1.6.0) (2025-03-26)
+
+
+### Bug Fixes
+
+* change Posted field to pointer in getRepositoryRequestBody ([f60fe2c](https://github.com/think-root/content-alchemist/commit/f60fe2c156654a6029d9f36e912a3a11820602c3))
+
+
+### Features
+
+* implement pagination in GetRepository function ([543ae86](https://github.com/think-root/content-alchemist/commit/543ae8626baf023fba51060ee0f953cc1e52c86d))
+
 # [1.5.0](https://github.com/think-root/content-alchemist/compare/v1.4.0...v1.5.0) (2025-03-24)
 
 
