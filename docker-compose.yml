@@ -1,10 +1,8 @@
 services:
-  content-alchemist:
-    container_name: content-alchemist
+  content-maestro:
+    container_name: content-maestro
     restart: always
-    ports:
-      - "127.0.0.1:9111:9111"
-    image: content-alchemist:latest
+    image: content-maestro:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,9 +11,18 @@ services:
     env_file:
       - .env
     environment:
-      TZ: Europe/Kiev
+      - TZ=Europe/Kiev
+      - APP_VERSION=${APP_VERSION}
+    ports:
+      - "${API_PORT:-8080}:${API_PORT:-8080}"
+    volumes:
+      - content-maestro-data:/app/data/badger
     networks:
       - think-root-network
+
+volumes:
+  content-maestro-data:
+    name: content-maestro-data
 
 networks:
   think-root-network:
