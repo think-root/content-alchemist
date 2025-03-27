@@ -1,21 +1,18 @@
-name: Deploy content-maestro
+name: Deploy content-alchemist
 
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Release content-maestro"]
+    workflows: ["Release content-alchemist"]
     types:
       - completed
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -78,17 +75,16 @@ jobs:
             cd "$REPO_FOLDER"
 
             echo "Setting up .env file..."
-            echo "${{ secrets.ENV_PROD }}" > .env
+            echo "${{ secrets.ENV_PROD }}" | base64 --decode > .env
 
-            LATEST_TAG=$(curl -s https://api.github.com/repos/${{ github.repository }}/tags | grep -o '"name": "[^"]*' | head -1 | cut -d'"' -f4)
-            APP_VERSION=${LATEST_TAG:-dev}
-            echo "Latest tag: $APP_VERSION"
+            echo "Determining version from Git tags..."
+            export APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+            echo "APP_VERSION: $APP_VERSION"
 
-            echo "Building Docker image with version $APP_VERSION"
-            export APP_VERSION
+            echo "Building Docker image with build arg..."
             docker compose build --build-arg APP_VERSION=$APP_VERSION
 
-            if docker inspect content-maestro >/dev/null 2>&1; then
+            if docker inspect content-alchemist >/dev/null 2>&1; then
               echo "Stopping and removing existing container..."
               docker compose down -v --rmi all
             fi
