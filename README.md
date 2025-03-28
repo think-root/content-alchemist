@@ -2,12 +2,13 @@
 
 <div align="center">
 
-![License](https://img.shields.io/github/license/think-root/content-alchemist?style=flat-square)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist)](https://github.com/think-root/content-alchemist)
-[![Version](https://img.shields.io/github/v/release/think-root/content-alchemist)](https://github.com/think-root/content-alchemist/releases)
-[![Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
-[![Deploy Status](https://github.com/think-root/content-alchemist/workflows/Deploy%20content-alchemist/badge.svg)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/think-root/content-alchemist)](https://goreportcard.com/report/github.com/think-root/content-alchemist)
+![License](https://img.shields.io/github/license/think-root/content-alchemist?style=flat-square&color=blue)
+[![Go Report Card](https://goreportcard.com/badge/github.com/think-root/content-alchemist?style=flat-square)](https://goreportcard.com/report/github.com/think-root/content-alchemist)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/think-root/content-alchemist?style=flat-square)](https://github.com/think-root/content-alchemist)
+[![Deploy Status](https://img.shields.io/github/actions/workflow/status/think-root/content-maestro/deploy.yml?branch=main&label=Deploy&style=flat-square)](https://github.com/think-root/content-alchemist/actions/workflows/deploy.yml)
+[![Version](https://img.shields.io/github/v/release/think-root/content-alchemist?style=flat-square)](https://github.com/think-root/content-alchemist/releases)
+[![Changelog](https://img.shields.io/badge/changelog-view-blue?style=flat-square)](CHANGELOG.md)
+
 
 <img src="baner.png" alt="baner">
 
@@ -74,9 +75,7 @@ git clone https://github.com/think-root/content-alchemist.git
 
 ### Config
 
-create a **.env** file in the app root directory
-
-Before creating the .env file, ensure you have:
+Create a **.env** file in the app root directory and ensure you have:
 
 1. Created a Mistral AI account
 2. Generated an API key
@@ -111,13 +110,12 @@ BEARER_TOKEN=<your token for API protection>
 
 ## API
 
-```text
-All API requests must include an Authorization header in the following format:
-Authorization: Bearer <BEARER_TOKEN>
-```
-
-Rate Limit: 100 requests per minute per IP address
-All endpoints return JSON responses with appropriate HTTP status codes
+> [!IMPORTANT]
+> All API requests must include an Authorization header in the following format:
+> Authorization: Bearer <BEARER_TOKEN>
+> 
+> Rate Limit: 60 requests per minute per IP address
+> All endpoints return JSON responses with appropriate HTTP status codes
 
 ### /api/manual-generate/
 
