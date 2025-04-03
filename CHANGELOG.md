@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/think-root/content-alchemist/compare/v1.6.0...v1.7.0) (2025-04-03)
+
+
+### Features
+
+* add indexes and optimize database connection ([3dd2cf2](https://github.com/think-root/content-alchemist/commit/3dd2cf2fb949d4bb50c0eeecdb3fb8d55fb42560))
+* improve database query construction in GetRepository ([c911719](https://github.com/think-root/content-alchemist/commit/c911719dbc196c98af6b8089432811d97032b9fa))
+
 # [1.6.0](https://github.com/think-root/content-alchemist/compare/v1.5.0...v1.6.0) (2025-03-26)
 
 
