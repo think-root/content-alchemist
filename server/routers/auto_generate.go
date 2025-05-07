@@ -19,9 +19,10 @@ type autoGenerateRequest struct {
 }
 
 type autoGenerateResponse struct {
-	Status    string   `json:"status"`
-	Added     []string `json:"added"`
-	DontAdded []string `json:"dont_added"`
+	Status       string   `json:"status"`
+	Added        []string `json:"added"`
+	DontAdded    []string `json:"dont_added"`
+	ErrorMessage string   `json:"error_message,omitempty"`
 }
 
 func AutoGenerate(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +63,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error searching repository in DB for URL %s: %v", repo.URL, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
+			response.ErrorMessage = "Failed to search for repository in database"
 			continue
 		}
 
@@ -76,6 +78,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error fetching repo readme for URL %s: %v", repo.URL, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
+			response.ErrorMessage = "Failed to fetch repository README"
 			continue
 		}
 
@@ -90,6 +93,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error processing text with LLM for URL %s: %v", repo.URL, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
+			response.ErrorMessage = "Failed to process text with language model"
 			continue
 		}
 
@@ -97,6 +101,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error adding repository to database for URL %s: %v", repo.URL, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
+			response.ErrorMessage = "Failed to add repository to database"
 			continue
 		}
 
