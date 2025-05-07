@@ -1,3 +1,17 @@
+# [1.8.0](https://github.com/think-root/content-alchemist/compare/v1.7.0...v1.8.0) (2025-05-07)
+
+
+### Features
+
+* **api:** add error messages to auto and manual generation responses ([fc95a39](https://github.com/think-root/content-alchemist/commit/fc95a39e20ee93e0bf4dab775c392f1b32a3ba9d))
+* **llm:** enhance AutoGenerate request with LLMProvider and configuration options ([50064fd](https://github.com/think-root/content-alchemist/commit/50064fd6008d7da23ef901fd53022ce04f409d9d))
+* **llm:** enhance manual generation with LLMProvider and configuration options ([3db14ec](https://github.com/think-root/content-alchemist/commit/3db14ec74a41f49363d91b9b791b2a3072f6309a))
+* **llm:** implement LLMProvider interface and message processing functions ([f6ae95e](https://github.com/think-root/content-alchemist/commit/f6ae95ea6affac6fcaeb6a0eaf111f95d282f55d))
+* **llm:** implement MistralAgent function for API interaction ([54ff465](https://github.com/think-root/content-alchemist/commit/54ff4657113c9e97d020a18fc872dc68ce66027b))
+* **llm:** implement MistralAPI function for API interaction ([a43db3b](https://github.com/think-root/content-alchemist/commit/a43db3b4868a21c3fdb2da7aca747a3086448f92))
+* **llm:** implement OpenAI function for API interaction ([5409c67](https://github.com/think-root/content-alchemist/commit/5409c679d275355a7d547bdf7af8e41a9f5d45a3))
+* **llm:** implement OpenRouter function for API interaction ([94c59c0](https://github.com/think-root/content-alchemist/commit/94c59c058357e0ed59edc7d5304d3df4be21b650))
+
 # [1.7.0](https://github.com/think-root/content-alchemist/compare/v1.6.0...v1.7.0) (2025-04-03)
 
 
