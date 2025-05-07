@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-func RespondJSON(w http.ResponseWriter, status int, statusMsg, message string, data interface{}) {
-	response := map[string]interface{}{}
+func RespondJSON(w http.ResponseWriter, status int, statusMsg, message string, data any) {
+	response := map[string]any{}
 
 	if statusMsg != "" {
 		response["status"] = statusMsg
