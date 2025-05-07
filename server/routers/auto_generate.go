@@ -10,9 +10,12 @@ import (
 )
 
 type autoGenerateRequest struct {
-	MaxRepos           int    `json:"max_repos"`
-	Since              string `json:"since"`
-	SpokenLanguageCode string `json:"spoken_language_code"`
+	MaxRepos           int            `json:"max_repos"`
+	Since              string         `json:"since"`
+	SpokenLanguageCode string         `json:"spoken_language_code"`
+	LLMProvider        string         `json:"llm_provider,omitempty"`
+	LLMConfig          map[string]any `json:"llm_config,omitempty"`
+	UseDirectURL       bool           `json:"use_direct_url,omitempty"`
 }
 
 type autoGenerateResponse struct {
@@ -76,7 +79,13 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		processedText, err := llm.Mistral(repoReadme)
+		var textToProcess string
+		if reqBody.UseDirectURL {
+			textToProcess = repo.URL
+		} else {
+			textToProcess = repoReadme
+		}
+		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, reqBody.LLMConfig)
 		if err != nil {
 			log.Printf("Error processing text with LLM for URL %s: %v", repo.URL, err)
 			response.Status = "error"
