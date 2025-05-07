@@ -11,7 +11,10 @@ import (
 )
 
 type manualGenerateRequest struct {
-	URL string `json:"url"`
+	URL          string         `json:"url"`
+	LLMProvider  string         `json:"llm_provider,omitempty"`
+	LLMConfig    map[string]any `json:"llm_config,omitempty"`
+	UseDirectURL bool           `json:"use_direct_url,omitempty"`
 }
 
 type manualGenerateResponse struct {
@@ -67,7 +70,14 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		processedText, err := llm.Mistral(repoReadme)
+		var textToProcess string
+		if reqBody.UseDirectURL {
+			textToProcess = url
+		} else {
+			textToProcess = repoReadme
+		}
+
+		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, reqBody.LLMConfig)
 		if err != nil {
 			log.Printf("Error processing text with LLM for URL %s: %v", url, err)
 			response.Status = "error"
