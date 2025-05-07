@@ -36,7 +36,7 @@ var (
 	httpClient    = &http.Client{Timeout: time.Second * 60}
 )
 
-func Mistral(text string) (string, error) {
+func MistralAgent(text string) (string, error) {
 	requestBody := MistralRequestBody{
 		AgentID: agent,
 		Messages: []Message{
