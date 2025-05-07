@@ -24,6 +24,7 @@ This is a ready-made solution in the form of an API server that generates social
 - RESTful API for manual generation of repository descriptions by specifying the repository URL
 - RESTful API for content management
 - Database storage
+- Support for multiple AI providers (Mistral AI, OpenAI, OpenRouter)
 
 
 ### Technology Stack
@@ -31,7 +32,10 @@ This is a ready-made solution in the form of an API server that generates social
 - Go 1.23
 - MariaDB/MySQL
 - Docker & Docker Compose
-- Mistral AI [API](https://docs.mistral.ai/api/)
+- Multiple AI Providers:
+  - Mistral AI [API](https://docs.mistral.ai/api/)
+  - OpenAI [API](https://platform.openai.com/docs/api-reference)
+  - OpenRouter [API](https://openrouter.ai/docs)
 
 ## Installation
 
@@ -39,16 +43,47 @@ This is a ready-made solution in the form of an API server that generates social
 
 - Docker v20.10.0 or later
 - Docker Compose v2.0.0 or later
-- Mistral AI API key
+- API key for at least one of the supported AI providers
 
 ## How to run
 
 ### Requirements
 
 - [docker](https://docs.docker.com/engine/install/) or/and [docker-compose](https://docs.docker.com/compose/install/)
-- [mistral ai](https://console.mistral.ai/api-keys/) api key
+- [mistral ai](https://console.mistral.ai/api-keys/) api key (or other supported provider)
 
-### Preparation
+### Clone repo
+
+```shell
+git clone https://github.com/think-root/content-alchemist.git
+```
+
+### Config
+
+Create a **.env** file in the app root directory and ensure you have:
+
+1. Created an account with at least one of the supported AI providers
+2. Generated API key(s) for the provider(s) you plan to use
+3. If using Mistral AI agent, created and configured a Mistral agent
+4. Set up your MariaDB instance
+
+```properties
+# Required for database and API protection
+DB_CONNECTION=<db connection string e.g. user:password@tcp(localhost:3306)>
+BEARER_TOKEN=<your token for API protection>
+
+# Mistral AI Provider Settings
+MISTRAL_TOKEN=<mistral api key>
+MISTRAL_AGENT=<get agent api id https://console.mistral.ai/build/agents>
+
+# OpenAI Provider Settings (optional)
+OPENAI_TOKEN=<openai api key>
+
+# OpenRouter Provider Settings (optional)
+OPENROUTER_TOKEN=<openrouter api key>
+```
+
+### Mistral AI Agent configuration
 
 - create mistral [agent](https://console.mistral.ai/build/agents) (model: mistral large 2.1, temperature: 0.1)
 - system prompt (UA, translate yourself if necessary):
@@ -65,28 +100,6 @@ This is a ready-made solution in the form of an API server that generates social
 7. Перед генерацією тексту переконайся, що він повністю відповідає усім вищезазначеним вимогам.  
 
 Далі тобі буде надано назву GitHub репозиторію та його README. Твоє завдання — створити чіткий, короткий і зрозумілий опис, який відповідає всім вищезазначеним вимогам.
-```
-
-### Clone repo
-
-```shell
-git clone https://github.com/think-root/content-alchemist.git
-```
-
-### Config
-
-Create a **.env** file in the app root directory and ensure you have:
-
-1. Created a Mistral AI account
-2. Generated an API key
-3. Created and configured a Mistral agent
-4. Set up your MariaDB instance
-
-```properties
-MISTRAL_TOKEN=<mistral api key>
-MISTRAL_AGENT=<get agent api id https://console.mistral.ai/build/agents>
-DB_CONNECTION=<db connection string e.g. user:password@tcp(localhost:3306)>
-BEARER_TOKEN=<your token for API protection>
 ```
 
 ### Deploy
