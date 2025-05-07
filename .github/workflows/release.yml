@@ -1,13 +1,7 @@
 name: Release content-alchemist
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - '.github/ISSUE_TEMPLATE/**'
+  workflow_dispatch:
 
 jobs:
   release:
