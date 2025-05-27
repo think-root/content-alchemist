@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/think-root/content-alchemist/compare/v1.8.0...v1.8.1) (2025-05-27)
+
+
+### Bug Fixes
+
+* **llm:** correct HTTP_REFERER header in OpenRouter API requests ([8073cf9](https://github.com/think-root/content-alchemist/commit/8073cf9db6a636581b1a19b8726bfac68be54fe1))
+
 # [1.8.0](https://github.com/think-root/content-alchemist/compare/v1.7.0...v1.8.0) (2025-05-07)
 
 
