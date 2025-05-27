@@ -27,7 +27,7 @@ func OpenRouter(requestBody map[string]any) (string, error) {
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("HTTP_REFERER", "https://github.com/think-root/content-alchemist")
+	req.Header.Set("HTTP-Referer", "https://github.com/think-root/content-alchemist")
 	req.Header.Set("X-Title", "content-alchemist")
 
 	client := &http.Client{}
