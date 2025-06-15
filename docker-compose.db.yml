@@ -1,7 +1,7 @@
 services:
-  think-root-db:
-    container_name: think-root-db
-    image: postgres:16-alpine
+  postgresql-db:
+    container_name: postgresql-db
+    image: postgres:17-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
