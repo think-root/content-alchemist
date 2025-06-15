@@ -1,3 +1,17 @@
+# [1.9.0](https://github.com/think-root/content-alchemist/compare/v1.8.1...v1.9.0) (2025-06-15)
+
+
+### Bug Fixes
+
+* **server:** handle server startup errors ([763a9dd](https://github.com/think-root/content-alchemist/commit/763a9ddf17837c86116c06e690c84288497ac04a))
+
+
+### Features
+
+* **ci:** introduce separate Docker Compose files for app and db ([ead3bdd](https://github.com/think-root/content-alchemist/commit/ead3bdd05ce8afc0d6578878922ed46c177cb7fc))
+* **db:** migrate database from MySQL to PostgreSQL ([0a40225](https://github.com/think-root/content-alchemist/commit/0a40225ea8db4b1ecf26d0121d5265eb887f7a5b))
+* **db:** switch database operations from GORM to raw SQL ([4610c70](https://github.com/think-root/content-alchemist/commit/4610c70c216d05f53bb212dd93ddeb92e4153de5))
+
 ## [1.8.1](https://github.com/think-root/content-alchemist/compare/v1.8.0...v1.8.1) (2025-05-27)
 
 
