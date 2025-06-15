@@ -77,15 +77,28 @@ jobs:
             echo "Building Docker image with version $APP_VERSION"
             export APP_VERSION
 
-            docker compose -f docker-compose.db.yml up -d --no-recreate
+            # Check database container status
+            echo "Checking database container status..."
+            if docker inspect think-root-db >/dev/null 2>&1; then
+              if docker inspect -f '{{.State.Running}}' think-root-db | grep -q true; then
+                echo "Database container is already running, skipping..."
+              else
+                echo "Database container exists but not running, starting it..."
+                docker compose -f docker-compose.db.yml start
+              fi
+            else
+              echo "Database container doesn't exist, creating and starting..."
+              docker compose -f docker-compose.db.yml up -d --no-recreate
+            fi
 
-            docker compose -f docker-compose.app.yml build --build-arg APP_VERSION=$APP_VERSION
-
+            # Always rebuild and restart application container
+            echo "Stopping and removing existing application container..."
             if docker inspect content-alchemist >/dev/null 2>&1; then
-              echo "Stopping and removing existing content-alchemist container..."
               docker compose -f docker-compose.app.yml down --rmi all
             fi
 
+            echo "Building and starting application..."
+            docker compose -f docker-compose.app.yml build --build-arg APP_VERSION=$APP_VERSION
             docker compose -f docker-compose.app.yml up -d --no-deps --build
 
             echo "Deployment complete!"
