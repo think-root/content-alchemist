@@ -3,30 +3,38 @@ package database
 import (
 	"fmt"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func UpdatePostedStatusByURL(url string, posted bool) error {
-	var repository GithubRepositories
-	result := DBThinkRoot.Where("url = ?", url).First(&repository)
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return fmt.Errorf("repository with URL %s not found", url)
-		}
-		return fmt.Errorf("error finding repository: %v", result.Error)
+	// First check if repository exists
+	var exists bool
+	checkQuery := "SELECT EXISTS(SELECT 1 FROM alchemist_github_repositories WHERE url = $1)"
+	err := DBThinkRoot.QueryRow(checkQuery, url).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("error checking repository existence: %v", err)
+	}
+	
+	if !exists {
+		return fmt.Errorf("repository with URL %s not found", url)
 	}
 
-	repository.Posted = posted
+	// Update the repository
+	var postedValue int
+	var datePosted *time.Time
+	
 	if posted {
+		postedValue = 1
 		now := time.Now()
-		repository.DatePosted = &now
+		datePosted = &now
 	} else {
-		repository.DatePosted = nil
+		postedValue = 0
+		datePosted = nil
 	}
-	result = DBThinkRoot.Save(&repository)
-	if result.Error != nil {
-		return fmt.Errorf("error updating repository: %v", result.Error)
+
+	updateQuery := "UPDATE alchemist_github_repositories SET posted = $1, date_posted = $2 WHERE url = $3"
+	_, err = DBThinkRoot.Exec(updateQuery, postedValue, datePosted, url)
+	if err != nil {
+		return fmt.Errorf("error updating repository: %v", err)
 	}
 
 	return nil

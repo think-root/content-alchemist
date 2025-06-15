@@ -6,15 +6,26 @@ import (
 
 func CountRepositories(posted *bool) (int, error) {
 	var count int64
-	query := DBThinkRoot.Model(&GithubRepositories{})
+	var query string
+	var args []interface{}
 
 	if posted != nil {
-		query = query.Where("posted = ?", *posted)
+		var postedValue int
+		if *posted {
+			postedValue = 1
+		} else {
+			postedValue = 0
+		}
+		query = "SELECT COUNT(*) FROM alchemist_github_repositories WHERE posted = $1"
+		args = []interface{}{postedValue}
+	} else {
+		query = "SELECT COUNT(*) FROM alchemist_github_repositories"
+		args = []interface{}{}
 	}
 
-	result := query.Count(&count)
-	if result.Error != nil {
-		return 0, fmt.Errorf("error counting repositories: %v", result.Error)
+	err := DBThinkRoot.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("error counting repositories: %v", err)
 	}
 
 	return int(count), nil
