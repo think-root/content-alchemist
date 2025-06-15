@@ -28,5 +28,8 @@ func main() {
 	log.Printf("Server listen on port %s (app version: %s)\n\n",
 		config.SERVER_PORT, config.APP_VERSION)
 
-	http.ListenAndServe(":"+config.SERVER_PORT, r)
+	err := http.ListenAndServe(":"+config.SERVER_PORT, r)
+	if err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
 }
