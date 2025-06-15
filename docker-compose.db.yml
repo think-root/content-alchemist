@@ -20,6 +20,7 @@ services:
 
 volumes:
   postgresql_data:
+    name: postgresql_data
 
 networks:
   think-root-network:
