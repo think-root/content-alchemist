@@ -30,7 +30,7 @@ This is a ready-made solution in the form of an API server that generates social
 ### Technology Stack
 
 - Go 1.23
-- MariaDB/MySQL
+- PostgreSQL 16
 - Docker & Docker Compose
 - Multiple AI Providers:
   - Mistral AI [API](https://docs.mistral.ai/api/)
@@ -65,11 +65,16 @@ Create a **.env** file in the app root directory and ensure you have:
 1. Created an account with at least one of the supported AI providers
 2. Generated API key(s) for the provider(s) you plan to use
 3. If using Mistral AI agent, created and configured a Mistral agent
-4. Set up your MariaDB instance
+4. Set up your PostgreSQL instance
 
 ```properties
 # Required for database and API protection
-DB_CONNECTION=<db connection string e.g. user:password@tcp(localhost:3306)>
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_EXTERNAL_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_DB=think-root-db
 BEARER_TOKEN=<your token for API protection>
 
 # Mistral AI Provider Settings
@@ -110,15 +115,15 @@ OPENROUTER_TOKEN=<openrouter api key>
    docker network create think-root-network
    ```
 
-2. Deploy MariaDB:
+2. Deploy PostgreSQL:
 
    ```bash
-   docker run -d --name mariadb --network think-root-network -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 mariadb:latest
+   docker compose -f docker-compose.db.yml up -d
    ```
 
 3. Deploy content-alchemist:
    ```bash
-   docker compose up -d
+   docker compose -f docker-compose.app.yml up -d
    ```
 
 ## API
@@ -384,14 +389,14 @@ curl -X PATCH \
 ### Development Setup
 
 1. Install Go 1.23 or later
-2. Install MariaDB 10.5 or later
+2. Install PostgreSQL 16 or later
 3. Clone the repository
 4. Install dependencies: `go mod download`
 
 ### Running Locally
 
-1. Set up your .env file
-2. Start MariaDB
+1. Set up your .env file with PostgreSQL connection details
+2. Start PostgreSQL
 3. Run the server:
    ```bash
    go run ./cmd/server/main.go
