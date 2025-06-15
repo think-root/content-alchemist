@@ -9,7 +9,7 @@ services:
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:5432"
     volumes:
-      - content-maestro-postgres-data:/var/lib/postgresql/data
+      - postgresql_data:/var/lib/postgresql/data
     networks:
       - think-root-network
     healthcheck:
@@ -19,7 +19,7 @@ services:
       retries: 5
 
 volumes:
-  content-maestro-postgres-data:
+  postgresql_data:
 
 networks:
   think-root-network:
