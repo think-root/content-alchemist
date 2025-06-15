@@ -1,19 +1,15 @@
 services:
   content-alchemist:
     container_name: content-alchemist
-    restart: always
-    ports:
-      - "127.0.0.1:9111:9111"
     image: content-alchemist:latest
     build:
       context: .
-      dockerfile: Dockerfile
       args:
         APP_VERSION: ${APP_VERSION}
     env_file:
       - .env
-    environment:
-      TZ: Europe/Kiev
+    ports:
+      - "${API_PORT:-9111}:${API_PORT:-9111}"
     networks:
       - think-root-network
 
