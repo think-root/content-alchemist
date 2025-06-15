@@ -32,8 +32,8 @@ func buildPostgreSQLDSN(host, port, user, password, dbname string) string {
 
 func createDatabaseIfNotExists() error {
 	// Connect to PostgreSQL without specifying a database
-	defaultDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=disable",
-		config.POSTGRES_HOST, config.POSTGRES_PORT, config.POSTGRES_USER, config.POSTGRES_PASSWORD)
+	defaultDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		config.POSTGRES_HOST, config.POSTGRES_PORT, config.POSTGRES_USER, config.POSTGRES_PASSWORD, config.POSTGRES_DB)
 	
 	db, err := sql.Open("postgres", defaultDSN)
 	if err != nil {
