@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/think-root/content-alchemist/compare/v1.9.0...v1.9.1) (2025-06-15)
+
+
+### Bug Fixes
+
+* **db:** include database name in default DSN ([9fdbb5d](https://github.com/think-root/content-alchemist/commit/9fdbb5d967a8b310bafcf9855a1b6b47160d3cd1))
+
 # [1.9.0](https://github.com/think-root/content-alchemist/compare/v1.8.1...v1.9.0) (2025-06-15)
 
 
