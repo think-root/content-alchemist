@@ -19,7 +19,7 @@ type getRepositoryRequestBody struct {
 }
 
 type getRepositoryItem struct {
-	ID         int        `json:"id"`
+	ID         int64      `json:"id"`
 	Posted     bool       `json:"posted"`
 	URL        string     `json:"url"`
 	Text       string     `json:"text"`
@@ -107,7 +107,7 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 	for i, repo := range repositories {
 		items[i] = getRepositoryItem{
 			ID:         repo.ID,
-			Posted:     repo.Posted,
+			Posted:     repo.Posted == 1,
 			URL:        repo.URL,
 			Text:       repo.Text,
 			DateAdded:  repo.DateAdded,
