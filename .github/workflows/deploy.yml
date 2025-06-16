@@ -79,8 +79,8 @@ jobs:
 
             # Check database container status
             echo "Checking database container status..."
-            if docker inspect think-root-db >/dev/null 2>&1; then
-              if docker inspect -f '{{.State.Running}}' think-root-db | grep -q true; then
+            if docker inspect postgresql-db >/dev/null 2>&1; then
+              if docker inspect -f '{{.State.Running}}' postgresql-db | grep -q true; then
                 echo "Database container is already running, skipping..."
               else
                 echo "Database container exists but not running, starting it..."
