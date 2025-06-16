@@ -1,13 +1,11 @@
 package parser
 
 import (
-	"content-alchemist/database"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -41,16 +39,9 @@ func GetTrendingRepos(maxRepos int, since, spokenLanguageCode string) ([]Reposit
 		if len(repos) < maxRepos {
 			repoURL := "https://github.com" + s.Find(".lh-condensed > a").AttrOr("href", "")
 
-			postExists, err := database.SearchPostInDB(repoURL)
-			if err == nil {
-				if !postExists {
-					repos = append(repos, Repository{
-						URL: repoURL,
-					})
-				}
-			} else {
-				log.Println(err.Error())
-			}
+			repos = append(repos, Repository{
+				URL: repoURL,
+			})
 		}
 	})
 	return repos, nil
