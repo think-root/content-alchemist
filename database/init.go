@@ -68,7 +68,7 @@ func createTableIfNotExists() error {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS alchemist_github_repositories (
 		id BIGSERIAL PRIMARY KEY,
-		url TEXT NOT NULL,
+		url TEXT NOT NULL UNIQUE,
 		text TEXT NOT NULL,
 		posted INTEGER NOT NULL DEFAULT 0,
 		date_added TIMESTAMP,
@@ -87,6 +87,60 @@ func createTableIfNotExists() error {
 	}
 
 	log.Println("Table alchemist_github_repositories is ready")
+	return nil
+}
+
+func addUniqueConstraintToURL() error {
+	var constraintExists bool
+	checkQuery := `
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.table_constraints
+			WHERE constraint_name = 'alchemist_github_repositories_url_key'
+			AND table_name = 'alchemist_github_repositories'
+		)
+	`
+	
+	err := DBThinkRoot.QueryRow(checkQuery).Scan(&constraintExists)
+	if err != nil {
+		return fmt.Errorf("failed to check constraint existence: %v", err)
+	}
+	
+	if constraintExists {
+		log.Println("Unique constraint on URL already exists")
+		return nil
+	}
+	
+	removeDuplicatesQuery := `
+		DELETE FROM alchemist_github_repositories
+		WHERE id NOT IN (
+			SELECT MIN(id)
+			FROM alchemist_github_repositories
+			GROUP BY url
+		)
+	`
+	
+	result, err := DBThinkRoot.Exec(removeDuplicatesQuery)
+	if err != nil {
+		return fmt.Errorf("failed to remove duplicates: %v", err)
+	}
+	
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected > 0 {
+		log.Printf("Removed %d duplicate repositories", rowsAffected)
+	}
+	
+	// Add unique constraint
+	addConstraintQuery := `
+		ALTER TABLE alchemist_github_repositories
+		ADD CONSTRAINT alchemist_github_repositories_url_key UNIQUE (url)
+	`
+	
+	_, err = DBThinkRoot.Exec(addConstraintQuery)
+	if err != nil {
+		return fmt.Errorf("failed to add unique constraint: %v", err)
+	}
+	
+	log.Println("Added unique constraint to URL column")
 	return nil
 }
 
@@ -167,6 +221,12 @@ func init() {
 	if err != nil {
 		log.Printf("Error creating table: %v", err)
 		return
+	}
+
+	// Add unique constraint to URL column for existing databases
+	err = addUniqueConstraintToURL()
+	if err != nil {
+		log.Printf("Warning: Could not add unique constraint to URL: %v", err)
 	}
 
 	// Ensure sequence is synchronized with existing data (prevents duplicate key errors after migration)
