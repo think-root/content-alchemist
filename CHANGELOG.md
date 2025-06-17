@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/think-root/content-alchemist/compare/v1.9.1...v1.10.0) (2025-06-17)
+
+
+### Features
+
+* **db:** Add unique constraint to repository URLs ([30244ee](https://github.com/think-root/content-alchemist/commit/30244ee6c48cfc0c18f47cf170639037699c2909))
+
 ## [1.9.1](https://github.com/think-root/content-alchemist/compare/v1.9.0...v1.9.1) (2025-06-15)
 
 
