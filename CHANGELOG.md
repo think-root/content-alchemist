@@ -1,3 +1,11 @@
+# [1.11.0](https://github.com/think-root/content-alchemist/compare/v1.10.0...v1.11.0) (2025-06-22)
+
+
+### Features
+
+* **api:** add update repository text endpoint ([98d38de](https://github.com/think-root/content-alchemist/commit/98d38deb099fbd563573de5c4c18d854dcc868fb))
+* **db:** add update repository text functionality ([b56555e](https://github.com/think-root/content-alchemist/commit/b56555e98209fde25eb5a0550f82047634eb98cf))
+
 # [1.10.0](https://github.com/think-root/content-alchemist/compare/v1.9.1...v1.10.0) (2025-06-17)
 
 
