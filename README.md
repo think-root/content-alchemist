@@ -22,8 +22,8 @@ This is a ready-made solution in the form of an API server that generates social
 
 - RESTful API for automatic generation of repository descriptions based on GitHub trends
 - RESTful API for manual generation of repository descriptions by specifying the repository URL
-- RESTful API for content management
-- Database storage
+- RESTful API for content management and text editing
+- Database storage with PostgreSQL
 - Support for multiple AI providers (Mistral AI, OpenAI, OpenRouter)
 
 
@@ -147,7 +147,7 @@ OPENROUTER_TOKEN=<openrouter api key>
 
 ```bash
 curl -X POST \
-  'http://localhost:9111/think-root/api/manual-generate/' \
+  'http://localhost:8080/think-root/api/manual-generate/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{"url": "https://github.com/example/repo"}'
@@ -191,7 +191,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  'http://localhost:9111/think-root/api/auto-generate/' \
+  'http://localhost:8080/think-root/api/auto-generate/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -235,7 +235,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  'http://localhost:9111/think-root/api/get-repository/' \
+  'http://localhost:8080/think-root/api/get-repository/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -357,7 +357,7 @@ curl -X POST \
 
 ```bash
 curl -X PATCH \
-  'http://localhost:9111/think-root/api/update-posted/' \
+  'http://localhost:8080/think-root/api/update-posted/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -381,6 +381,123 @@ curl -X PATCH \
 {
   "status": "ok",
   "message": "Posted status updated successfully"
+}
+```
+
+---
+
+### /api/update-repository-text/
+
+**Endpoint:** `/think-root/api/update-repository-text/`
+
+**Method:** `PATCH`
+
+**Description:** This endpoint updates the text field of a repository. The repository can be identified by either its unique ID or URL.
+
+**Curl Examples:**
+
+Update by ID:
+```bash
+curl -X PATCH \
+  'http://localhost:8080/think-root/api/update-repository-text/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 123,
+    "text": "Updated repository description"
+  }'
+```
+
+Update by URL:
+```bash
+curl -X PATCH \
+  'http://localhost:8080/think-root/api/update-repository-text/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://github.com/example/repo",
+    "text": "Updated repository description"
+  }'
+```
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | No* | Repository ID (positive integer) |
+| `url` | string | No* | Repository URL (non-empty string) |
+| `text` | string | Yes | New text content (1-1000 characters, valid UTF-8) |
+
+*Either `id` or `url` must be provided, but not both.
+
+**Request Examples:**
+
+1. Update by ID:
+```json
+{
+  "id": 123,
+  "text": "Updated repository description"
+}
+```
+
+2. Update by URL:
+```json
+{
+  "url": "https://github.com/example/awesome-project",
+  "text": "This is an awesome project with new features"
+}
+```
+
+**Validation Rules:**
+- Exactly one identifier (`id` or `url`) must be provided
+- Text field is required and cannot be empty
+- Text length must not exceed 1000 characters
+- Text must be valid UTF-8 encoding
+- ID must be a positive integer if provided
+- URL must be a non-empty string if provided
+
+**Status Codes:**
+- 200: Success - Repository text updated
+- 400: Bad Request - Validation errors
+- 401: Unauthorized - Invalid or missing Bearer token
+- 404: Not Found - Repository not found
+- 500: Internal Server Error - Database or server error
+
+**Success Response Example:**
+
+```json
+{
+  "status": "ok",
+  "message": "Repository text updated successfully",
+  "data": {
+    "id": 123,
+    "url": "https://github.com/example/repo",
+    "text": "Updated repository description",
+    "updated_at": "2025-06-22T15:00:00Z"
+  }
+}
+```
+
+**Error Response Examples:**
+
+```json
+{
+  "status": "error",
+  "message": "Text field is required and cannot be empty"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "Either id or url must be provided"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "repository with ID 123 not found"
 }
 ```
 
