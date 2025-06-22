@@ -39,3 +39,46 @@ func UpdatePostedStatusByURL(url string, posted bool) error {
 
 	return nil
 }
+
+func UpdateRepositoryTextByIDOrURL(identifier, text string, isID bool) (*GithubRepositories, error) {
+	var repo GithubRepositories
+	var query string
+	
+	if isID {
+		query = `
+			UPDATE alchemist_github_repositories
+			SET text = $1
+			WHERE id = $2
+			RETURNING id, url, text, posted, date_added, date_posted
+		`
+	} else {
+		query = `
+			UPDATE alchemist_github_repositories
+			SET text = $1
+			WHERE url = $2
+			RETURNING id, url, text, posted, date_added, date_posted
+		`
+	}
+	
+	err := DBThinkRoot.QueryRow(query, text, identifier).Scan(
+		&repo.ID,
+		&repo.URL,
+		&repo.Text,
+		&repo.Posted,
+		&repo.DateAdded,
+		&repo.DatePosted,
+	)
+	
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			if isID {
+				return nil, fmt.Errorf("repository with ID %s not found", identifier)
+			} else {
+				return nil, fmt.Errorf("repository with URL %s not found", identifier)
+			}
+		}
+		return nil, fmt.Errorf("error updating repository: %v", err)
+	}
+	
+	return &repo, nil
+}
