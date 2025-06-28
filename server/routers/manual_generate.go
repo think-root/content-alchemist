@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -48,21 +49,22 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		DontAdded: []string{},
 	}
 
-	for _, url := range urls {
-		exists, err := database.SearchPostInDB(url)
-		if err != nil {
-			log.Printf("Error searching repository in DB for URL %s: %v", url, err)
-			response.Status = "error"
-			response.DontAdded = append(response.DontAdded, url)
-			response.ErrorMessage = "Failed to search for repository in database"
-			continue
-		}
+	filteredURLs, err := parser.FilterExistingURLs(urls)
+	if err != nil {
+		log.Printf("Error filtering existing URLs: %v", err)
+		http.Error(w, "Failed to filter existing repositories", http.StatusInternalServerError)
+		return
+	}
 
-		if exists {
+	for _, url := range urls {
+		if !slices.Contains(filteredURLs, url) {
 			log.Printf("Repository already exists in DB: %s", url)
 			response.DontAdded = append(response.DontAdded, url)
-			continue
 		}
+	}
+
+	for _, url := range filteredURLs {
+		log.Printf("Processing repository: %s", url)
 
 		repoReadme, err := parser.GetRepoReadme(url)
 		if err != nil {
