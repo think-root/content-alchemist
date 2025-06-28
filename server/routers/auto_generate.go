@@ -37,8 +37,8 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if reqBody.MaxRepos <= 0 || reqBody.Since == "" || reqBody.SpokenLanguageCode == "" {
-		http.Error(w, "All fields (max_repos, since, spoken_language_code) are required", http.StatusBadRequest)
+	if reqBody.MaxRepos <= 0 {
+		http.Error(w, "Fields max_repos are required", http.StatusBadRequest)
 		return
 	}
 
@@ -57,21 +57,6 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 
 	for _, repo := range repos {
 		log.Printf("Processing repository: %s", repo.URL)
-
-		exists, err := database.SearchPostInDB(repo.URL)
-		if err != nil {
-			log.Printf("Error searching repository in DB for URL %s: %v", repo.URL, err)
-			response.Status = "error"
-			response.DontAdded = append(response.DontAdded, repo.URL)
-			response.ErrorMessage = "Failed to search for repository in database"
-			continue
-		}
-
-		if exists {
-			log.Printf("Repository already exists in DB: %s", repo.URL)
-			response.DontAdded = append(response.DontAdded, repo.URL)
-			continue
-		}
 
 		repoReadme, err := parser.GetRepoReadme(repo.URL)
 		if err != nil {
