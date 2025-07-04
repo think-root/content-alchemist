@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/think-root/content-alchemist/compare/v1.13.0...v1.13.1) (2025-07-04)
+
+
+### Bug Fixes
+
+* **middlewares:** allow PATCH method in CORS headers ([a93c689](https://github.com/think-root/content-alchemist/commit/a93c689eeb4b524bc486a64b2a8b15f919ade888))
+
 # [1.13.0](https://github.com/think-root/content-alchemist/compare/v1.12.0...v1.13.0) (2025-07-04)
 
 
