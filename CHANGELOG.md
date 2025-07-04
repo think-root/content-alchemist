@@ -1,3 +1,12 @@
+# [1.13.0](https://github.com/think-root/content-alchemist/compare/v1.12.0...v1.13.0) (2025-07-04)
+
+
+### Features
+
+* **api:** add delete repository endpoint ([9cb35c8](https://github.com/think-root/content-alchemist/commit/9cb35c876cc498fa802ba31c65cbdde7770fb308))
+* **api:** add delete repository route to server ([1f5880b](https://github.com/think-root/content-alchemist/commit/1f5880bbd18694e443cbde7108df0a6558ac553d))
+* **db:** add delete repository by id or url function ([3215a12](https://github.com/think-root/content-alchemist/commit/3215a12aefa24d357442269176a580f7f4ac5d58))
+
 # [1.12.0](https://github.com/think-root/content-alchemist/compare/v1.11.0...v1.12.0) (2025-06-28)
 
 
