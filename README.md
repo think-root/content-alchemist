@@ -501,6 +501,117 @@ curl -X PATCH \
 }
 ```
 
+---
+
+### /api/delete-repository/
+
+**Endpoint:** `/think-root/api/delete-repository/`
+
+**Method:** `DELETE`
+
+**Description:** This endpoint deletes a repository from the database. The repository can be identified by either its unique ID or URL.
+
+**Curl Examples:**
+
+Delete by ID:
+```bash
+curl -X DELETE \
+  'http://localhost:8080/think-root/api/delete-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 123
+  }'
+```
+
+Delete by URL:
+```bash
+curl -X DELETE \
+  'http://localhost:8080/think-root/api/delete-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://github.com/example/repo"
+  }'
+```
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | No* | Repository ID (positive integer) |
+| `url` | string | No* | Repository URL (non-empty string) |
+
+*Either `id` or `url` must be provided, but not both.
+
+**Request Examples:**
+
+1. Delete by ID:
+```json
+{
+  "id": 123
+}
+```
+
+2. Delete by URL:
+```json
+{
+  "url": "https://github.com/example/awesome-project"
+}
+```
+
+**Validation Rules:**
+- Exactly one identifier (`id` or `url`) must be provided
+- ID must be a positive integer if provided
+- URL must be a non-empty string if provided
+
+**Status Codes:**
+- 200: Success - Repository deleted
+- 400: Bad Request - Validation errors
+- 401: Unauthorized - Invalid or missing Bearer token
+- 404: Not Found - Repository not found
+- 405: Method Not Allowed - Wrong HTTP method
+- 500: Internal Server Error - Database or server error
+
+**Success Response Example:**
+
+```json
+{
+  "status": "ok",
+  "message": "Repository deleted successfully"
+}
+```
+
+**Error Response Examples:**
+
+```json
+{
+  "status": "error",
+  "message": "Either id or url must be provided"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "Provide either id or url, not both"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "repository with ID 123 not found"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "repository with URL https://github.com/example/repo not found"
+}
+```
+
 ## Contribution
 
 ### Development Setup
