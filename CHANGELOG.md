@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/think-root/content-alchemist/compare/v1.11.0...v1.12.0) (2025-06-28)
+
+
+### Features
+
+* **parser:** add repository filtering logic and database integration ([9af8e7a](https://github.com/think-root/content-alchemist/commit/9af8e7a6d36f7f683dec38ff66e24a67b2dbbccc))
+
 # [1.11.0](https://github.com/think-root/content-alchemist/compare/v1.10.0...v1.11.0) (2025-06-22)
 
 
