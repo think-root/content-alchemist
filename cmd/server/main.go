@@ -25,6 +25,7 @@ func main() {
 	r.Post("/think-root/api/get-repository/", routers.GetRepository)
 	r.Patch("/think-root/api/update-posted/", routers.UpdatePostedStatus)
 	r.Patch("/think-root/api/update-repository-text/", routers.UpdateRepositoryText)
+	r.Delete("/think-root/api/delete-repository/", routers.DeleteRepository)
 
 	log.Printf("Server listen on port %s (app version: %s)\n\n",
 		config.SERVER_PORT, config.APP_VERSION)
