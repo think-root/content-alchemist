@@ -82,3 +82,33 @@ func UpdateRepositoryTextByIDOrURL(identifier, text string, isID bool) (*GithubR
 	
 	return &repo, nil
 }
+
+func DeleteRepositoryByIDOrURL(identifier string, isID bool) error {
+	var query string
+	
+	if isID {
+		query = "DELETE FROM alchemist_github_repositories WHERE id = $1"
+	} else {
+		query = "DELETE FROM alchemist_github_repositories WHERE url = $1"
+	}
+	
+	result, err := DBThinkRoot.Exec(query, identifier)
+	if err != nil {
+		return fmt.Errorf("error deleting repository: %v", err)
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error checking affected rows: %v", err)
+	}
+	
+	if rowsAffected == 0 {
+		if isID {
+			return fmt.Errorf("repository with ID %s not found", identifier)
+		} else {
+			return fmt.Errorf("repository with URL %s not found", identifier)
+		}
+	}
+	
+	return nil
+}
