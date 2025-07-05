@@ -4,7 +4,9 @@ import (
 	"content-alchemist/database"
 	"content-alchemist/llm"
 	"content-alchemist/parser"
+	"content-alchemist/server"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"slices"
@@ -12,10 +14,11 @@ import (
 )
 
 type manualGenerateRequest struct {
-	URL          string         `json:"url"`
-	LLMProvider  string         `json:"llm_provider,omitempty"`
-	LLMConfig    map[string]any `json:"llm_config,omitempty"`
-	UseDirectURL bool           `json:"use_direct_url,omitempty"`
+	URL               string         `json:"url"`
+	LLMProvider       string         `json:"llm_provider,omitempty"`
+	LLMConfig         map[string]any `json:"llm_config,omitempty"`
+	UseDirectURL      bool           `json:"use_direct_url,omitempty"`
+	LLMOutputLanguage string         `json:"llm_output_language,omitempty"`
 }
 
 type manualGenerateResponse struct {
@@ -63,6 +66,14 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Parse and validate language codes
+	languageCodes := server.ParseLanguageCodes(reqBody.LLMOutputLanguage)
+	if err := server.ValidateLanguageCodes(languageCodes); err != nil {
+		log.Printf("Invalid language codes: %v", err)
+		http.Error(w, fmt.Sprintf("Invalid language codes: %v", err), http.StatusBadRequest)
+		return
+	}
+
 	for _, url := range filteredURLs {
 		log.Printf("Processing repository: %s", url)
 
@@ -82,7 +93,89 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 			textToProcess = repoReadme
 		}
 
-		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, reqBody.LLMConfig)
+		// Prepare LLM config with multilingual instructions
+		llmConfig := reqBody.LLMConfig
+		if llmConfig == nil {
+			llmConfig = make(map[string]any)
+		}
+
+		// Add multilingual prompt instructions to the system message or create one
+		multilingualPrompt := server.BuildMultilingualPrompt(languageCodes)
+		
+		// Handle messages in config
+		if messages, exists := llmConfig["messages"]; exists {
+			// Try different possible types for messages
+			switch msgSlice := messages.(type) {
+			case []map[string]any:
+				// Look for existing system message
+				systemMessageFound := false
+				for i, msg := range msgSlice {
+					if role, exists := msg["role"]; exists && role == "system" {
+						if content, exists := msg["content"]; exists {
+							msgSlice[i]["content"] = fmt.Sprintf("%s\n\n%s", content, multilingualPrompt)
+						} else {
+							msgSlice[i]["content"] = multilingualPrompt
+						}
+						systemMessageFound = true
+						break
+					}
+				}
+				
+				// If no system message found, add one at the beginning
+				if !systemMessageFound {
+					systemMsg := map[string]any{
+						"role":    "system",
+						"content": multilingualPrompt,
+					}
+					msgSlice = append([]map[string]any{systemMsg}, msgSlice...)
+					llmConfig["messages"] = msgSlice
+				}
+			case []any:
+				// Handle []any type (common in JSON unmarshaling)
+				var convertedMessages []map[string]any
+				for _, msg := range msgSlice {
+					if msgMap, ok := msg.(map[string]any); ok {
+						convertedMessages = append(convertedMessages, msgMap)
+					}
+				}
+				
+				// Look for existing system message
+				systemMessageFound := false
+				for i, msg := range convertedMessages {
+					if role, exists := msg["role"]; exists && role == "system" {
+						if content, exists := msg["content"]; exists {
+							convertedMessages[i]["content"] = fmt.Sprintf("%s\n\n%s", content, multilingualPrompt)
+						} else {
+							convertedMessages[i]["content"] = multilingualPrompt
+						}
+						systemMessageFound = true
+						break
+					}
+				}
+				
+				// If no system message found, add one at the beginning
+				if !systemMessageFound {
+					systemMsg := map[string]any{
+						"role":    "system",
+						"content": multilingualPrompt,
+					}
+					convertedMessages = append([]map[string]any{systemMsg}, convertedMessages...)
+				}
+				llmConfig["messages"] = convertedMessages
+			default:
+				log.Printf("Warning: messages field has unexpected type: %T", messages)
+			}
+		} else {
+			// No messages exist, create system message
+			llmConfig["messages"] = []map[string]any{
+				{
+					"role":    "system",
+					"content": multilingualPrompt,
+				},
+			}
+		}
+
+		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, llmConfig)
 		if err != nil {
 			log.Printf("Error processing text with LLM for URL %s: %v", url, err)
 			response.Status = "error"
