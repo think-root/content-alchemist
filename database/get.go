@@ -93,3 +93,45 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 
 	return repositories, int(totalCount), nil
 }
+
+// GetRepositoryByIDOrURL retrieves a single repository by ID or URL
+func GetRepositoryByIDOrURL(identifier string, isID bool) (*GithubRepositories, error) {
+	var repo GithubRepositories
+	var query string
+
+	if isID {
+		query = `
+			SELECT id, url, text, posted, date_added, date_posted
+			FROM alchemist_github_repositories
+			WHERE id = $1
+		`
+	} else {
+		query = `
+			SELECT id, url, text, posted, date_added, date_posted
+			FROM alchemist_github_repositories
+			WHERE url = $1
+		`
+	}
+
+	err := DBThinkRoot.QueryRow(query, identifier).Scan(
+		&repo.ID,
+		&repo.URL,
+		&repo.Text,
+		&repo.Posted,
+		&repo.DateAdded,
+		&repo.DatePosted,
+	)
+
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			if isID {
+				return nil, fmt.Errorf("repository with ID %s not found", identifier)
+			} else {
+				return nil, fmt.Errorf("repository with URL %s not found", identifier)
+			}
+		}
+		return nil, fmt.Errorf("error fetching repository: %v", err)
+	}
+
+	return &repo, nil
+}
