@@ -142,16 +142,6 @@ curl -X POST \
   }'
 ```
 
-### Supported Languages
-
-Common language codes include: `en` (English), `uk` (Ukrainian), `fr` (French), `de` (German), `es` (Spanish), `it` (Italian), `pt` (Portuguese), `ru` (Russian), `pl` (Polish), `ja` (Japanese), `ko` (Korean), `zh` (Chinese), and many more.
-
-### Documentation
-
--  **[Complete Multilingual Documentation](MULTILINGUAL_DOCUMENTATION.md)** - Detailed API documentation and examples
--  **[Migration Guide](MIGRATION_GUIDE.md)** - How to upgrade from previous versions
-- ✅ **Backward Compatible** - All existing integrations continue to work unchanged
-
 ---
 
 ## API
