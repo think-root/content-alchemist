@@ -1,3 +1,16 @@
+# [1.14.0](https://github.com/think-root/content-alchemist/compare/v1.13.1...v1.14.0) (2025-07-05)
+
+
+### Features
+
+* **db:** add function to get repository by ID or URL ([9560b70](https://github.com/think-root/content-alchemist/commit/9560b701e403385668f45c80e3a829e7203aa0a2))
+* **server:** add language validator functionality ([a6bebd0](https://github.com/think-root/content-alchemist/commit/a6bebd0e3b9f3c2b4c4a5a24ff31c6f4bdfde469))
+* **server:** add multilingual helper functions ([894462f](https://github.com/think-root/content-alchemist/commit/894462f7970f03a4b4995c274b1184e706361da0))
+* **server:** add multilingual support to auto generate endpoint ([bd6acc1](https://github.com/think-root/content-alchemist/commit/bd6acc182115ed7113fe22512628c88cf13ab26d))
+* **server:** add multilingual support to manual generate endpoint ([ca3ac58](https://github.com/think-root/content-alchemist/commit/ca3ac58efd1e0de98967748fa088aa01985ba15f))
+* **server:** add multilingual support to update repository endpoint ([ed4ace5](https://github.com/think-root/content-alchemist/commit/ed4ace5b339d5c143d379ef348b7a5a7c2006b97))
+* **server:** add multilingual text processing to get repository endpoint ([e19fd0a](https://github.com/think-root/content-alchemist/commit/e19fd0af4d0ae024eec6ab7bed95ce263dffb3d6))
+
 ## [1.13.1](https://github.com/think-root/content-alchemist/compare/v1.13.0...v1.13.1) (2025-07-04)
 
 
