@@ -29,21 +29,24 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 	orderBy := "id DESC"
 	switch sortBy {
 	case "date_posted":
-		if sortOrder == "ASC" {
+		switch sortOrder {
+		case "ASC":
 			orderBy = "date_posted IS NULL DESC, date_posted ASC"
-		} else if sortOrder == "DESC" {
+		case "DESC":
 			orderBy = "date_posted IS NULL ASC, date_posted DESC"
 		}
 	case "date_added":
-		if sortOrder == "ASC" {
+		switch sortOrder {
+		case "ASC":
 			orderBy = "date_added ASC"
-		} else if sortOrder == "DESC" {
+		case "DESC":
 			orderBy = "date_added DESC"
 		}
 	case "id":
-		if sortOrder == "ASC" {
+		switch sortOrder {
+		case "ASC":
 			orderBy = "id ASC"
-		} else if sortOrder == "DESC" {
+		case "DESC":
 			orderBy = "id DESC"
 		}
 	}
@@ -57,14 +60,14 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 
 	// Build data query
 	dataQuery := fmt.Sprintf("SELECT id, url, text, posted, date_added, date_posted FROM alchemist_github_repositories %s ORDER BY %s", whereClause, orderBy)
-	
+
 	// Add LIMIT and OFFSET
 	if limit > 0 {
 		dataQuery += fmt.Sprintf(" LIMIT $%d", argIndex)
 		args = append(args, limit)
 		argIndex++
 	}
-	
+
 	if offset > 0 {
 		dataQuery += fmt.Sprintf(" OFFSET $%d", argIndex)
 		args = append(args, offset)
