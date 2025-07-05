@@ -60,9 +60,7 @@ func prepareMessagesConfig(text string, config map[string]any) map[string]any {
 
 func ProcessWithProvider(text string, provider string, config map[string]any) (string, error) {
 	switch provider {
-	case "mistral_agent", "":
-		return MistralAgent(text)
-	case "mistral_api":
+	case "mistral_api", "":
 		return MistralAPI(prepareMessagesConfig(text, config))
 	case "openai":
 		return OpenAI(prepareMessagesConfig(text, config))
