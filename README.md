@@ -16,13 +16,14 @@
 
 ## Description
 
-This is a ready-made solution in the form of an API server that generates social media posts containing descriptions of GitHub repositories using [AI](https://mistral.ai/) 🤖 and stores them for later use. It is a standalone solution that you can manage using your own utility or by leveraging existing tools available in this organization's repositories, for example [content-maestro](https://github.com/think-root/content-maestro)
+This is a ready-made solution in the form of an API server that generates social media posts containing descriptions of GitHub repositories using AI and stores them for later use. It is a standalone solution that you can manage using your own utility or by leveraging existing tools available in this organization's repositories, for example [content-maestro](https://github.com/think-root/content-maestro)
 
 ### Key Features
 
 - RESTful API for automatic generation of repository descriptions based on GitHub trends
 - RESTful API for manual generation of repository descriptions by specifying the repository URL
 - RESTful API for content management and text editing
+- Generate and retrieve content in multiple languages
 - Database storage with PostgreSQL
 - Support for multiple AI providers (Mistral AI, OpenAI, OpenRouter)
 
@@ -64,8 +65,7 @@ Create a **.env** file in the app root directory and ensure you have:
 
 1. Created an account with at least one of the supported AI providers
 2. Generated API key(s) for the provider(s) you plan to use
-3. If using Mistral AI agent, created and configured a Mistral agent
-4. Set up your PostgreSQL instance
+3. Set up your PostgreSQL instance
 
 ```properties
 # Required for database and API protection
@@ -79,7 +79,6 @@ BEARER_TOKEN=<your token for API protection>
 
 # Mistral AI Provider Settings
 MISTRAL_TOKEN=<mistral api key>
-MISTRAL_AGENT=<get agent api id https://console.mistral.ai/build/agents>
 
 # OpenAI Provider Settings (optional)
 OPENAI_TOKEN=<openai api key>
@@ -88,24 +87,6 @@ OPENAI_TOKEN=<openai api key>
 OPENROUTER_TOKEN=<openrouter api key>
 ```
 
-### Mistral AI Agent configuration
-
-- create mistral [agent](https://console.mistral.ai/build/agents) (model: mistral large 2.1, temperature: 0.1)
-- system prompt (UA, translate yourself if necessary):
-
-```text
-Ти слухняний і корисний помічник, який суворо дотримується усіх вимог які описані нижче. Твоя основна задача — генерувати короткі описи GitHub репозиторіїв, українською мовою, з текстів, які будуть надані. Ці тексти є описами (README) GitHub репозиторіїв. При генеруванні тексту обов'язково дотримуйся таких вимог:
-
-1. В описі має бути не більше трьох ключових функцій репозиторію.
-2. Використовуй простий і зрозумілий стиль тексту без перерахувань. Інформацію про функції репозиторію вплітай у зв'язний текст.
-3. Не згадуй інформацію про сумісність, платформи, авторів.
-4. Не використовуй розмітку тексту, таку як HTML теги, Markdown розмітку тощо.
-5. Опис має бути лаконічним і точним, обсягом від 200 до 400 символів (з урахуванням пробілів та інших символів).
-6. Якщо зустрічаються технічні терміни, такі як назви мов програмування, бібліотек, команд або інструментів, видів програмування, залишай їх англійською мовою без перекладу.  
-7. Перед генерацією тексту переконайся, що він повністю відповідає усім вищезазначеним вимогам.  
-
-Далі тобі буде надано назву GitHub репозиторію та його README. Твоє завдання — створити чіткий, короткий і зрозумілий опис, який відповідає всім вищезазначеним вимогам.
-```
 
 ### Deploy
 
@@ -126,6 +107,53 @@ OPENROUTER_TOKEN=<openrouter api key>
    docker compose -f docker-compose.app.yml up -d
    ```
 
+## Multilingual Support
+
+Content Alchemist now supports generating and retrieving repository descriptions in multiple languages. This feature allows you to:
+
+- **Generate multilingual content**: Create repository descriptions in multiple languages simultaneously
+- **Language-specific retrieval**: Get repository texts in specific languages
+- **Flexible text formats**: Support for single language and multilingual text formats
+- **Automatic validation**: Language codes are validated against ISO 639-1 standards
+
+### Quick Examples
+
+**Generate content in multiple languages:**
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/manual-generate/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://github.com/facebook/react",
+    "llm_output_language": "en,uk,fr"
+  }'
+```
+
+**Retrieve content in Ukrainian:**
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/get-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "limit": 5,
+    "text_language": "uk"
+  }'
+```
+
+### Supported Languages
+
+Common language codes include: `en` (English), `uk` (Ukrainian), `fr` (French), `de` (German), `es` (Spanish), `it` (Italian), `pt` (Portuguese), `ru` (Russian), `pl` (Polish), `ja` (Japanese), `ko` (Korean), `zh` (Chinese), and many more.
+
+### Documentation
+
+-  **[Complete Multilingual Documentation](MULTILINGUAL_DOCUMENTATION.md)** - Detailed API documentation and examples
+-  **[Migration Guide](MIGRATION_GUIDE.md)** - How to upgrade from previous versions
+- ✅ **Backward Compatible** - All existing integrations continue to work unchanged
+
+---
+
 ## API
 
 > [!IMPORTANT]
@@ -141,7 +169,7 @@ OPENROUTER_TOKEN=<openrouter api key>
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to manually generate description for a provided repository URL, and add it to the database.
+**Description:** This endpoint is used to manually generate description for a provided repository URL, and add it to the database. Supports multilingual text generation.
 
 **Curl Example:**
 
@@ -150,14 +178,33 @@ curl -X POST \
   'http://localhost:8080/think-root/api/manual-generate/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
-  -d '{"url": "https://github.com/example/repo"}'
+  -d '{
+    "url": "https://github.com/example/repo",
+    "llm_output_language": "en,uk,fr"
+  }'
 ```
 
-**Request Example:**
+**Request Parameters:**
 
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | GitHub repository URL |
+| `llm_output_language` | string | No | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk" |
+
+**Request Examples:**
+
+1. Basic request (Ukrainian only):
 ```json
 {
   "url": "https://github.com/example/repo"
+}
+```
+
+2. Multilingual request:
+```json
+{
+  "url": "https://github.com/example/repo",
+  "llm_output_language": "en,uk,fr"
 }
 ```
 
@@ -185,7 +232,7 @@ curl -X POST \
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database.
+**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database. Supports multilingual text generation.
 
 **Curl Example:**
 
@@ -197,17 +244,38 @@ curl -X POST \
   -d '{
     "max_repos": 5,
     "since": "weekly",
-    "spoken_language_code": "en"
+    "spoken_language_code": "en",
+    "llm_output_language": "en,uk,fr"
   }'
 ```
 
-**Request Example:**
+**Request Parameters:**
 
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `max_repos` | integer | No | Maximum number of repositories to process |
+| `since` | string | No | Time period for trending repos ("daily", "weekly", "monthly") |
+| `spoken_language_code` | string | No | Programming language filter |
+| `llm_output_language` | string | No | Comma-separated language codes for output (e.g., "en,uk,fr"). Default: "uk" |
+
+**Request Examples:**
+
+1. Basic request:
 ```json
 {
   "max_repos": 5,
   "since": "weekly",
   "spoken_language_code": "en"
+}
+```
+
+2. Multilingual request:
+```json
+{
+  "max_repos": 5,
+  "since": "weekly",
+  "spoken_language_code": "en",
+  "llm_output_language": "en,uk,fr"
 }
 ```
 
@@ -229,7 +297,7 @@ curl -X POST \
 
 **Method:** `POST`
 
-**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates.
+**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates. Supports language-specific text filtering.
 
 **Curl Example:**
 
@@ -242,7 +310,8 @@ curl -X POST \
     "limit": 1,
     "posted": false,
     "sort_by": "date_added",
-    "sort_order": "DESC"
+    "sort_order": "DESC",
+    "text_language": "uk"
   }'
 ```
 
@@ -256,6 +325,7 @@ curl -X POST \
 | `sort_order` | string | No | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`. |
 | `page` | integer | No | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination. |
 | `page_size` | integer | No | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination. |
+| `text_language` | string | No | Single language code to filter repository texts (e.g., "uk", "en", "fr"). Only one language code allowed. |
 
 **Request Examples:**
 
@@ -288,6 +358,24 @@ curl -X POST \
   "posted": true,
   "sort_by": "date_posted",
   "sort_order": "DESC"
+}
+```
+
+4. ** Get records with Ukrainian text only:**
+```json
+{
+  "limit": 10,
+  "text_language": "uk"
+}
+```
+
+5. ** Get English text with pagination:**
+```json
+{
+  "limit": 0,
+  "page": 1,
+  "page_size": 5,
+  "text_language": "en"
 }
 ```
 
