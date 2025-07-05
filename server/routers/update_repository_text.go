@@ -4,6 +4,7 @@ import (
 	"content-alchemist/database"
 	"content-alchemist/server"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -19,16 +20,30 @@ type updateRepositoryTextRequest struct {
 }
 
 type updateRepositoryTextResponse struct {
-	ID        int64     `json:"id"`
-	URL       string    `json:"url"`
-	Text      string    `json:"text"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID                 int64     `json:"id"`
+	URL                string    `json:"url"`
+	Text               string    `json:"text"`
+	UpdatedLanguage    string    `json:"updated_language,omitempty"`
+	AvailableLanguages []string  `json:"available_languages"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 func UpdateRepositoryText(w http.ResponseWriter, r *http.Request) {
 	var reqBody updateRepositoryTextRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		server.RespondJSON(w, http.StatusBadRequest, "error", "Invalid request body", nil)
+		return
+	}
+
+	// Extract target language from query parameter (default to "uk")
+	targetLang := r.URL.Query().Get("lang")
+	if targetLang == "" {
+		targetLang = "uk"
+	}
+
+	// Validate target language
+	if err := server.ValidateLanguageCodes([]string{targetLang}); err != nil {
+		server.RespondJSON(w, http.StatusBadRequest, "error", fmt.Sprintf("Invalid language code '%s': %v", targetLang, err), nil)
 		return
 	}
 
@@ -82,8 +97,28 @@ func UpdateRepositoryText(w http.ResponseWriter, r *http.Request) {
 		isID = false
 	}
 
-	// Update repository text
-	updatedRepo, err := database.UpdateRepositoryTextByIDOrURL(identifier, trimmedText, isID)
+	// Get existing repository to check current text format
+	existingRepo, err := database.GetRepositoryByIDOrURL(identifier, isID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			server.RespondJSON(w, http.StatusNotFound, "error", err.Error(), nil)
+			return
+		}
+		log.Printf("Error fetching existing repository: %v", err)
+		server.RespondJSON(w, http.StatusInternalServerError, "error", "Failed to fetch existing repository", nil)
+		return
+	}
+
+	// Apply intelligent multilingual update logic
+	finalText, err := server.UpdateLanguageInText(existingRepo.Text, trimmedText, targetLang)
+	if err != nil {
+		log.Printf("Error updating language in text: %v", err)
+		server.RespondJSON(w, http.StatusBadRequest, "error", fmt.Sprintf("Failed to update text: %v", err), nil)
+		return
+	}
+
+	// Update repository text with the processed final text
+	updatedRepo, err := database.UpdateRepositoryTextByIDOrURL(identifier, finalText, isID)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			server.RespondJSON(w, http.StatusNotFound, "error", err.Error(), nil)
@@ -94,12 +129,17 @@ func UpdateRepositoryText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get available languages for response
+	availableLanguages := server.GetAvailableLanguages(updatedRepo.Text)
+
 	// Prepare response
 	response := updateRepositoryTextResponse{
-		ID:        updatedRepo.ID,
-		URL:       updatedRepo.URL,
-		Text:      updatedRepo.Text,
-		UpdatedAt: time.Now(),
+		ID:                 updatedRepo.ID,
+		URL:                updatedRepo.URL,
+		Text:               updatedRepo.Text,
+		UpdatedLanguage:    targetLang,
+		AvailableLanguages: availableLanguages,
+		UpdatedAt:          time.Now(),
 	}
 
 	server.RespondJSON(w, http.StatusOK, "ok", "Repository text updated successfully", response)
