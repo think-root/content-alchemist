@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/think-root/content-alchemist/compare/v1.14.0...v1.15.0) (2025-07-14)
+
+
+### Features
+
+* **server:** add text cleaning for multilingual content ([e79671e](https://github.com/think-root/content-alchemist/commit/e79671e333b4357291190aaa4a7fafbeec9be0a1))
+
 # [1.14.0](https://github.com/think-root/content-alchemist/compare/v1.13.1...v1.14.0) (2025-07-05)
 
 
