@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+	"regexp"
 )
 
 type updateRepositoryTextRequest struct {
@@ -26,6 +27,16 @@ type updateRepositoryTextResponse struct {
 	UpdatedLanguage    string    `json:"updated_language,omitempty"`
 	AvailableLanguages []string  `json:"available_languages"`
 	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+func cleanMultilingualText(text string) string {
+	re1 := regexp.MustCompile(`===\s*\n*\s*\(([a-zA-Z]{2,3})\)`)
+	text = re1.ReplaceAllString(text, "===($1)")
+
+	re2 := regexp.MustCompile(`\)\s*\n*\s*===`)
+	text = re2.ReplaceAllString(text, ")===")
+
+	return text
 }
 
 func UpdateRepositoryText(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +64,9 @@ func UpdateRepositoryText(w http.ResponseWriter, r *http.Request) {
 		server.RespondJSON(w, http.StatusBadRequest, "error", "Text field is required and cannot be empty", nil)
 		return
 	}
+
+	// Pre-process the text to fix line break issues
+	trimmedText = cleanMultilingualText(trimmedText)
 
 	// Validate that exactly one identifier is provided
 	if reqBody.ID == nil && reqBody.URL == nil {
