@@ -184,7 +184,8 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if err := database.AddRepositoryToDB(url, processedText); err != nil {
+		cleanedText := server.CleanMultilingualText(processedText)
+		if err := database.AddRepositoryToDB(url, cleanedText); err != nil {
 			log.Printf("Error adding repository to database for URL %s: %v", url, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, url)
