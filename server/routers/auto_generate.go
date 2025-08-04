@@ -176,7 +176,8 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if err := database.AddRepositoryToDB(repo.URL, processedText); err != nil {
+		cleanedText := server.CleanMultilingualText(processedText)
+		if err := database.AddRepositoryToDB(repo.URL, cleanedText); err != nil {
 			log.Printf("Error adding repository to database for URL %s: %v", repo.URL, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
