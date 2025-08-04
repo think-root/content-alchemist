@@ -173,7 +173,7 @@ func ValidateMultilingualContent(text string) error {
 	if text == "" {
 		return fmt.Errorf("text cannot be empty")
 	}
-	
+
 	if !IsMultilingualText(text) {
 		// Validate as single text
 		if utf8.RuneCountInString(text) > 1000 {
@@ -184,22 +184,22 @@ func ValidateMultilingualContent(text string) error {
 		}
 		return nil
 	}
-	
+
 	langMap := ParseMultilingualText(text)
 	if len(langMap) == 0 {
 		return fmt.Errorf("no valid language content found in multilingual text")
 	}
-	
+
 	// Validate each language code
 	var languages []string
 	for lang := range langMap {
 		languages = append(languages, lang)
 	}
-	
+
 	if err := ValidateLanguageCodes(languages); err != nil {
 		return fmt.Errorf("invalid language codes in multilingual text: %w", err)
 	}
-	
+
 	// Validate each content
 	for lang, content := range langMap {
 		if content == "" {
@@ -212,6 +212,39 @@ func ValidateMultilingualContent(text string) error {
 			return fmt.Errorf("content for language '%s' must be valid UTF-8", lang)
 		}
 	}
-	
+
 	return nil
+}
+
+// CleanMultilingualText cleans and standardizes the multilingual text format.
+func CleanMultilingualText(text string) string {
+	// Don't process empty strings.
+	if text == "" {
+		return ""
+	}
+
+	// Trim leading/trailing whitespace from the whole string.
+	processedText := strings.TrimSpace(text)
+
+	// Check if the text is intended to be in the multilingual format.
+	// A simple check for the initial pattern is enough.
+	if !strings.Contains(processedText, "===(") {
+		// If it's not a multilingual text, return it as is.
+		return text
+	}
+
+	// Regex to remove spaces between '===' and '(en)'.
+	re1 := regexp.MustCompile(`===\s*\n*\s*\(([a-zA-Z]{2,3})\)`)
+	processedText = re1.ReplaceAllString(processedText, "===($1)")
+
+	// Regex to remove spaces between '(en)' and '==='
+	re2 := regexp.MustCompile(`\)\s*\n*\s*===`)
+	processedText = re2.ReplaceAllString(processedText, ")===")
+
+	// Ensure the text ends with "===", but don't add it if it's already there.
+	if !strings.HasSuffix(processedText, "===") {
+		processedText += "==="
+	}
+
+	return processedText
 }
