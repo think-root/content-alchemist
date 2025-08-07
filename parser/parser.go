@@ -64,7 +64,6 @@ func FilterExistingRepos(repos []Repository) ([]Repository, error) {
 			return nil, fmt.Errorf("error checking repository existence for URL %s: %v", repo.URL, err)
 		}
 		countAll += 1
-		fmt.Println(countAll)
 		if !exists {
 			filteredRepos = append(filteredRepos, repo)
 		}
