@@ -1,3 +1,12 @@
+# [1.16.0](https://github.com/think-root/content-alchemist/compare/v1.15.0...v1.16.0) (2025-08-04)
+
+
+### Features
+
+* **server:** add multilingual text cleaning and validation improvements ([f59eaa4](https://github.com/think-root/content-alchemist/commit/f59eaa4e421a653221ce41d493425006ac70fdfb))
+* **server:** clean multilingual text before database insertion ([1e94a55](https://github.com/think-root/content-alchemist/commit/1e94a5592248e566aa727007ceb4f1f46abca623))
+* **server:** clean multilingual text before database insertion ([7ae25d3](https://github.com/think-root/content-alchemist/commit/7ae25d3c473fa35298f69c1d0bef324c559dae78))
+
 # [1.15.0](https://github.com/think-root/content-alchemist/compare/v1.14.0...v1.15.0) (2025-07-14)
 
 
