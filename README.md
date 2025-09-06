@@ -25,7 +25,7 @@ This is a ready-made solution in the form of an API server that generates social
 - RESTful API for content management and text editing
 - Generate and retrieve content in multiple languages
 - Database storage with PostgreSQL
-- Support for multiple AI providers (Mistral AI, OpenAI, OpenRouter)
+- Support for multiple AI providers (Mistral AI, OpenAI, OpenRouter, Chutes.ai)
 
 
 ### Technology Stack
@@ -37,6 +37,7 @@ This is a ready-made solution in the form of an API server that generates social
   - Mistral AI [API](https://docs.mistral.ai/api/)
   - OpenAI [API](https://platform.openai.com/docs/api-reference)
   - OpenRouter [API](https://openrouter.ai/docs)
+  - Chutes.ai [API](https://chutes.ai)
 
 ## Installation
 
@@ -85,6 +86,9 @@ OPENAI_TOKEN=<openai api key>
 
 # OpenRouter Provider Settings (optional)
 OPENROUTER_TOKEN=<openrouter api key>
+
+# Chutes.ai Provider Settings (optional)
+CHUTES_API_TOKEN=<chutes api key>
 ```
 
 
@@ -190,7 +194,16 @@ curl -X POST \
 }
 ```
 
-2. Multilingual request:
+2. Request with specific AI provider:
+```json
+{
+  "url": "https://github.com/example/repo",
+  "llm_provider": "chutes",
+  "llm_output_language": "en"
+}
+```
+
+3. Multilingual request:
 ```json
 {
   "url": "https://github.com/example/repo",
@@ -235,7 +248,8 @@ curl -X POST \
     "max_repos": 5,
     "since": "weekly",
     "spoken_language_code": "en",
-    "llm_output_language": "en,uk,fr"
+    "llm_output_language": "en,uk,fr",
+    "llm_provider": "chutes"
   }'
 ```
 
@@ -259,7 +273,18 @@ curl -X POST \
 }
 ```
 
-2. Multilingual request:
+2. Request with Chutes.ai provider:
+```json
+{
+  "max_repos": 3,
+  "since": "daily",
+  "spoken_language_code": "en",
+  "llm_provider": "chutes",
+  "llm_output_language": "uk,en"
+}
+```
+
+3. Multilingual request:
 ```json
 {
   "max_repos": 5,
@@ -609,7 +634,8 @@ curl -X DELETE \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
-    "url": "https://github.com/example/repo"
+    "url": "https://github.com/example/repo",
+    "llm_provider": "chutes"
   }'
 ```
 
@@ -692,7 +718,54 @@ curl -X DELETE \
 
 ## Contribution
 
-### Development Setup
+## AI Provider Examples
+
+### Using Chutes.ai Provider
+
+The Chutes.ai provider supports the moonshotai/Kimi-K2-Instruct-0905 model and other OpenAI-compatible models. Here's how to use it:
+
+**Environment Setup:**
+```bash
+export CHUTES_API_TOKEN="your_chutes_api_token_here"
+```
+
+**Basic Usage Example:**
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/manual-generate/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://github.com/think-root/content-alchemist",
+    "llm_provider": "chutes",
+    "llm_output_language": "en"
+  }'
+```
+
+**Multilingual Generation with Chutes:**
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/auto-generate/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "max_repos": 5,
+    "since": "weekly",
+    "llm_provider": "chutes",
+    "llm_output_language": "en,uk,fr"
+  }'
+```
+
+### Provider Comparison
+
+| Provider | Model Examples | Best For |
+|----------|---------------|----------|
+| Mistral AI | mistral-large-latest | European languages, technical content |
+| OpenAI | gpt-4-turbo | General purpose, creative content |
+| OpenRouter | claude-3, gpt-4 | Flexibility, multiple models |
+| **Chutes.ai** | moonshotai/Kimi-K2-Instruct-0905 | **New!** Advanced reasoning, multilingual support |
+
+## Development Setup
 
 1. Install Go 1.23 or later
 2. Install PostgreSQL 16 or later
