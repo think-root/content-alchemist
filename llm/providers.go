@@ -66,6 +66,8 @@ func ProcessWithProvider(text string, provider string, config map[string]any) (s
 		return OpenAI(prepareMessagesConfig(text, config))
 	case "openrouter":
 		return OpenRouter(prepareMessagesConfig(text, config))
+	case "chutes":
+		return Chutes(prepareMessagesConfig(text, config))
 	default:
 		return "", fmt.Errorf("unsupported LLM provider: %s", provider)
 	}
