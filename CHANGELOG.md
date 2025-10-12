@@ -1,3 +1,11 @@
+# [1.17.0](https://github.com/think-root/content-alchemist/compare/v1.16.0...v1.17.0) (2025-09-06)
+
+
+### Features
+
+* **llm:** add support for Chutes API ([753db1a](https://github.com/think-root/content-alchemist/commit/753db1a1e4fba6ee85c5f163805ea7fb4c8886d1))
+* **providers:** add support for Chutes.ai ([c688f1e](https://github.com/think-root/content-alchemist/commit/c688f1eadbed45ca12c76ae5080ea39021fd2d76))
+
 # [1.16.0](https://github.com/think-root/content-alchemist/compare/v1.15.0...v1.16.0) (2025-08-04)
 
 
