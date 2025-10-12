@@ -312,7 +312,7 @@ curl -X POST \
 
 **Method:** `POST`
 
-**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates. Supports language-specific text filtering.
+**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates. By default, if `text_language` is omitted, the endpoint returns the raw multilingual text exactly as stored, e.g., "===(en)text===(uk)текст===". If `text_language` is provided (e.g., "en" or "uk"), the endpoint returns only that language’s text. If the requested language is not available, the response preserves the existing error handling behavior.
 
 **Curl Example:**
 
@@ -340,7 +340,7 @@ curl -X POST \
 | `sort_order` | string | No | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`. |
 | `page` | integer | No | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination. |
 | `page_size` | integer | No | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination. |
-| `text_language` | string | No | Single language code to filter repository texts (e.g., "uk", "en", "fr"). Only one language code allowed. |
+| `text_language` | string | No | Optional. When omitted, raw multilingual text is returned in the original format, for example "===(en)text===(uk)text===". When provided (e.g., "en", "uk"), the API extracts and returns only the specified language’s text. |
 
 **Request Examples:**
 
@@ -376,7 +376,7 @@ curl -X POST \
 }
 ```
 
-4. ** Get records with Ukrainian text only:**
+4. **Example: Specifying text_language: 'uk' returns only the Ukrainian text**
 ```json
 {
   "limit": 10,
@@ -393,6 +393,14 @@ curl -X POST \
   "text_language": "en"
 }
 ```
+
+6. **Example: Without text_language (raw multilingual text)**
+```json
+{
+  "limit": 10
+}
+```
+Returns raw multilingual text segments in the original format, e.g., "===(en)text===(uk)text===".
 
 **Pagination Details:**
 - When `limit` is 0:
@@ -445,6 +453,15 @@ curl -X POST \
   }
 }
 ```
+
+Additional Response Example (raw multilingual text):
+```json
+{
+  "text": "===(en)An open-source project===(uk)Відкритий проект===",
+  "... other fields ...": "..."
+}
+```
+Note: This indicates raw multilingual text as stored.
 
 ---
 
