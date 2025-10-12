@@ -153,8 +153,8 @@ curl -X POST \
 > [!IMPORTANT]
 > All API requests must include an Authorization header in the following format:
 > Authorization: Bearer <BEARER_TOKEN>
-> 
-> Rate Limit: 60 requests per minute per IP address
+>
+> Rate Limit: Configurable via RATE_LIMIT environment variable (default 5) requests per minute per IP address
 > All endpoints return JSON responses with appropriate HTTP status codes
 
 ### /api/manual-generate/
@@ -182,8 +182,11 @@ curl -X POST \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `url` | string | Yes | GitHub repository URL |
-| `llm_output_language` | string | No | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk" |
+| `url` | string | Yes | GitHub repository URL. Supports multiple whitespace-separated URLs to process in a single request. |
+| `llm_output_language` | string | No | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
+| `llm_provider` | string | No | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes"). |
+| `llm_config` | object | No | Optional provider-specific configuration map (includes messages; system prompt is augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127)). |
+| `use_direct_url` | boolean | No | If true, the URL string is used directly as LLM input instead of README content. |
 
 **Request Examples:**
 
@@ -257,10 +260,13 @@ curl -X POST \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `max_repos` | integer | No | Maximum number of repositories to process |
-| `since` | string | No | Time period for trending repos ("daily", "weekly", "monthly") |
-| `spoken_language_code` | string | No | Programming language filter |
-| `llm_output_language` | string | No | Comma-separated language codes for output (e.g., "en,uk,fr"). Default: "uk" |
+| `max_repos` | integer | Yes | Maximum number of repositories to process. Must be > 0 per [routers.AutoGenerate()](server/routers/auto_generate.go:43). |
+| `since` | string | No | Time period for trending repos ("daily", "weekly", "monthly"). |
+| `spoken_language_code` | string | No | Spoken language filter for GitHub Trending. |
+| `llm_output_language` | string | No | Comma-separated language codes for output (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
+| `llm_provider` | string | No | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes"). |
+| `llm_config` | object | No | Optional provider-specific configuration map; system prompt augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127). |
+| `use_direct_url` | boolean | No | If true, the repository URL string is used directly as LLM input instead of README content. |
 
 **Request Examples:**
 
@@ -404,18 +410,15 @@ Returns raw multilingual text segments in the original format, e.g., "===(en)tex
 
 **Pagination Details:**
 - When `limit` is 0:
-  - If neither `page` nor `page_size` are specified, returns all matching records without pagination
-  - If either `page` or `page_size` are specified, uses pagination mode
+  - If neither `page` nor `page_size` are specified, returns all matching records without pagination. In this case, `page=0`, `page_size=0`, `total_pages=1`, and `total_items` equals the count of all matching records.
+  - If either `page` or `page_size` are specified, pagination mode is used.
 - When `limit` > 0:
-  - Uses the specified limit with pagination
-  - Default page size is 10 if not specified
+  - Pagination mode is used. If `page` < 1, it defaults to 1. If `page_size` < 1, it defaults to 10.
 - Response always includes:
-  - `page`: Current page number (1 when returning all records)
-  - `page_size`: Number of items per page (equal to total items when returning all records)
-  - `total_pages`: Total number of pages (1 when returning all records)
-  - `total_items`: Total number of items matching the query
-- If `page` is less than 1, it defaults to 1
-- If `page_size` is less than 1, it defaults to 10
+  - `page`: Current page number (0 when returning all records without pagination; otherwise the active page number).
+  - `page_size`: Number of items per page (0 when returning all records without pagination; otherwise the active page size).
+  - `total_pages`: Total number of pages (1 when returning all records without pagination).
+  - `total_items`: Total number of items matching the query.
 
 **Sorting Behavior:**
 
@@ -471,7 +474,7 @@ Note: This indicates raw multilingual text as stored.
 
 **Method:** `PATCH`
 
-**Description:** This endpoint updates the posted status of a repository identified by its URL.
+**Description:** This endpoint updates the posted status of a repository identified by its URL. Note: when the URL does not exist, the current implementation returns 500 with a generic error rather than 404. Setting `posted=true` sets `date_posted` to current time; `posted=false` clears `date_posted` per [database.UpdatePostedStatusByURL()](database/update.go:8).
 
 **Curl Example:**
 
@@ -512,33 +515,73 @@ curl -X PATCH \
 
 **Method:** `PATCH`
 
-**Description:** This endpoint updates the text field of a repository. The repository can be identified by either its unique ID or URL.
+**Description:** Updates the repository text with two modes:
+- Full replace when `text_language` is omitted.
+- Strict language-specific update when `text_language` is provided. If the specified language does not exist in the existing multilingual content, returns 422 Unprocessable Entity.
 
-**Curl Examples:**
+**Request Schema:**
+- Exactly one of `id` or `url` must be provided
+- `text` is required
+- `text_language` is optional (language code). When provided, triggers language-specific update.
+- Language code validation is performed by [language.ValidateLanguageCodes()](server/language_validator.go:26)
 
-Update by ID:
+**Curl and JSON Examples:**
+
+1) Full replace (no text_language):
 ```bash
 curl -X PATCH \
   'http://localhost:8080/think-root/api/update-repository-text/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
-    "id": 123,
-    "text": "Updated repository description"
+    "id": 1172,
+    "text": "Updated text content via ID"
   }'
 ```
+Result in DB: "Updated text content via ID"
+Response includes `available_languages` (for plain: ["uk"]) and omits `updated_language`.
 
-Update by URL:
+2) Language update on existing multilingual:
 ```bash
 curl -X PATCH \
   'http://localhost:8080/think-root/api/update-repository-text/' \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
-    "url": "https://github.com/example/repo",
-    "text": "Updated repository description"
+    "id": 1172,
+    "text": "Updated text content via ID",
+    "text_language": "en"
   }'
 ```
+Result in DB: only the `en` segment updated; other segments unchanged.
+
+3) Language update on plain existing text:
+```bash
+curl -X PATCH \
+  'http://localhost:8080/think-root/api/update-repository-text/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 1172,
+    "text": "тут якийсь текст",
+    "text_language": "uk"
+  }'
+```
+Result in DB: "===(uk)тут якийсь текст==="
+
+4) Error when language missing in existing multilingual:
+```bash
+curl -X PATCH \
+  'http://localhost:8080/think-root/api/update-repository-text/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 1172,
+    "text": "KURWA! Ja perdoly jjajajajaj.",
+    "text_language": "pl"
+  }'
+```
+Response: `422 Unprocessable Entity` with message `language 'pl' not found in existing content`.
 
 **Request Parameters:**
 
@@ -547,77 +590,62 @@ curl -X PATCH \
 | `id` | integer | No* | Repository ID (positive integer) |
 | `url` | string | No* | Repository URL (non-empty string) |
 | `text` | string | Yes | New text content (1-1000 characters, valid UTF-8) |
+| `text_language` | string | No | Optional language code. When provided, performs a language-specific update (validated). |
 
-*Either `id` or `url` must be provided, but not both.
-
-**Request Examples:**
-
-1. Update by ID:
-```json
-{
-  "id": 123,
-  "text": "Updated repository description"
-}
-```
-
-2. Update by URL:
-```json
-{
-  "url": "https://github.com/example/awesome-project",
-  "text": "This is an awesome project with new features"
-}
-```
+*Exactly one of `id` or `url` must be provided.
 
 **Validation Rules:**
 - Exactly one identifier (`id` or `url`) must be provided
-- Text field is required and cannot be empty
-- Text length must not exceed 1000 characters
-- Text must be valid UTF-8 encoding
-- ID must be a positive integer if provided
-- URL must be a non-empty string if provided
+- `text` is required and non-empty
+- `text` length ≤ 1000 characters
+- `text` must be valid UTF-8
+- `text_language` validated via [language.ValidateLanguageCodes()](server/language_validator.go:25)
 
-**Status Codes:**
-- 200: Success - Repository text updated
-- 400: Bad Request - Validation errors
-- 401: Unauthorized - Invalid or missing Bearer token
-- 404: Not Found - Repository not found
-- 500: Internal Server Error - Database or server error
+**Response Fields:**
+- `status` and `message`
+- `data.id`, `data.url`, `data.text` (final text stored)
+- `data.updated_language` present only when `text_language` is provided
+- `data.available_languages` via [multilingual.GetAvailableLanguages()](server/multilingual_helper.go:156)
+- `data.updated_at`
 
-**Success Response Example:**
+**Success Response Examples:**
 
+Full replace (plain text):
 ```json
 {
   "status": "ok",
   "message": "Repository text updated successfully",
   "data": {
-    "id": 123,
+    "id": 1172,
     "url": "https://github.com/example/repo",
-    "text": "Updated repository description",
+    "text": "Updated text content via ID",
+    "available_languages": ["uk"],
     "updated_at": "2025-06-22T15:00:00Z"
   }
 }
 ```
 
-**Error Response Examples:**
-
+Language-specific update:
 ```json
 {
-  "status": "error",
-  "message": "Text field is required and cannot be empty"
+  "status": "ok",
+  "message": "Repository text updated successfully",
+  "data": {
+    "id": 1172,
+    "url": "https://github.com/example/repo",
+    "text": "Updated text content via ID",
+    "updated_language": "en",
+    "available_languages": ["en","uk"],
+    "updated_at": "2025-06-22T15:00:00Z"
+  }
 }
 ```
 
+**Error Response Example (missing language in existing multilingual):**
 ```json
 {
   "status": "error",
-  "message": "Either id or url must be provided"
-}
-```
-
-```json
-{
-  "status": "error",
-  "message": "repository with ID 123 not found"
+  "message": "language 'pl' not found in existing content"
 }
 ```
 
@@ -651,8 +679,7 @@ curl -X DELETE \
   -H 'Authorization: Bearer <BEARER_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
-    "url": "https://github.com/example/repo",
-    "llm_provider": "chutes"
+    "url": "https://github.com/example/repo"
   }'
 ```
 
@@ -690,9 +717,8 @@ curl -X DELETE \
 - 200: Success - Repository deleted
 - 400: Bad Request - Validation errors
 - 401: Unauthorized - Invalid or missing Bearer token
-- 404: Not Found - Repository not found
 - 405: Method Not Allowed - Wrong HTTP method
-- 500: Internal Server Error - Database or server error
+- 500: Internal Server Error - Database or server error (including when URL not found in update-posted)
 
 **Success Response Example:**
 
