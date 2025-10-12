@@ -14,7 +14,7 @@
 
 </div>
 
-## Description
+## 📖 Description
 
 This is a ready-made solution in the form of an API server that generates social media posts containing descriptions of GitHub repositories using AI and stores them for later use. It is a standalone solution that you can manage using your own utility or by leveraging existing tools available in this organization's repositories, for example [content-maestro](https://github.com/think-root/content-maestro)
 
@@ -39,7 +39,7 @@ This is a ready-made solution in the form of an API server that generates social
   - OpenRouter [API](https://openrouter.ai/docs)
   - Chutes.ai [API](https://chutes.ai)
 
-## Installation
+## 🛠️ Installation
 
 ### Prerequisites
 
@@ -47,7 +47,7 @@ This is a ready-made solution in the form of an API server that generates social
 - Docker Compose v2.0.0 or later
 - API key for at least one of the supported AI providers
 
-## How to run
+## ▶️ How to run
 
 ### Requirements
 
@@ -111,7 +111,7 @@ CHUTES_API_TOKEN=<chutes api key>
    docker compose -f docker-compose.app.yml up -d
    ```
 
-## Multilingual Support
+## 🌐 Multilingual Support
 
 Content Alchemist now supports generating and retrieving repository descriptions in multiple languages. This feature allows you to:
 
@@ -148,7 +148,7 @@ curl -X POST \
 
 ---
 
-## API
+## 🔌 API
 
 > [!IMPORTANT]
 > All API requests must include an Authorization header in the following format:
@@ -733,9 +733,7 @@ curl -X DELETE \
 }
 ```
 
-## Contribution
-
-## AI Provider Examples
+## 🤖 AI Provider Examples
 
 ### Using Chutes.ai Provider
 
@@ -782,7 +780,7 @@ curl -X POST \
 | OpenRouter | claude-3, gpt-4 | Flexibility, multiple models |
 | **Chutes.ai** | moonshotai/Kimi-K2-Instruct-0905 | **New!** Advanced reasoning, multilingual support |
 
-## Development Setup
+## 🧑‍💻 Development Setup
 
 1. Install Go 1.23 or later
 2. Install PostgreSQL 16 or later
