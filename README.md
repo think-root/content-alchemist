@@ -9,7 +9,6 @@
 [![Version](https://img.shields.io/github/v/release/think-root/content-alchemist?style=flat-square)](https://github.com/think-root/content-alchemist/releases)
 [![Changelog](https://img.shields.io/badge/changelog-view-blue?style=flat-square)](CHANGELOG.md)
 
-
 <img src="baner.png" alt="baner">
 
 </div>
@@ -26,7 +25,6 @@ This is a ready-made solution in the form of an API server that generates social
 - Generate and retrieve content in multiple languages
 - Database storage with PostgreSQL
 - Support for multiple AI providers (Mistral AI, OpenAI, OpenRouter, Chutes.ai)
-
 
 ### Technology Stack
 
@@ -91,7 +89,6 @@ OPENROUTER_TOKEN=<openrouter api key>
 CHUTES_API_TOKEN=<chutes api key>
 ```
 
-
 ### Deploy
 
 1. Create Docker network:
@@ -123,6 +120,7 @@ Content Alchemist now supports generating and retrieving repository descriptions
 ### Quick Examples
 
 **Generate content in multiple languages:**
+
 ```bash
 curl -X POST \
   'http://localhost:8080/think-root/api/manual-generate/' \
@@ -135,6 +133,7 @@ curl -X POST \
 ```
 
 **Retrieve content in Ukrainian:**
+
 ```bash
 curl -X POST \
   'http://localhost:8080/think-root/api/get-repository/' \
@@ -180,17 +179,18 @@ curl -X POST \
 
 **Request Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `url` | string | Yes | GitHub repository URL. Supports multiple whitespace-separated URLs to process in a single request. |
-| `llm_output_language` | string | No | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
-| `llm_provider` | string | No | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes"). |
-| `llm_config` | object | No | Optional provider-specific configuration map (includes messages; system prompt is augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127)). |
-| `use_direct_url` | boolean | No | If true, the URL string is used directly as LLM input instead of README content. |
+| Parameter             | Type    | Required | Description                                                                                                                                                                                                                |
+| --------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                 | string  | Yes      | GitHub repository URL. Supports multiple whitespace-separated URLs to process in a single request.                                                                                                                         |
+| `llm_output_language` | string  | No       | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
+| `llm_provider`        | string  | No       | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes").                                                                                                                                            |
+| `llm_config`          | object  | No       | Optional provider-specific configuration map (includes messages; system prompt is augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127)).                                                  |
+| `use_direct_url`      | boolean | No       | If true, the URL string is used directly as LLM input instead of README content.                                                                                                                                           |
 
 **Request Examples:**
 
 1. Basic request (Ukrainian only):
+
 ```json
 {
   "url": "https://github.com/example/repo"
@@ -198,6 +198,7 @@ curl -X POST \
 ```
 
 2. Request with specific AI provider:
+
 ```json
 {
   "url": "https://github.com/example/repo",
@@ -207,6 +208,7 @@ curl -X POST \
 ```
 
 3. Multilingual request:
+
 ```json
 {
   "url": "https://github.com/example/repo",
@@ -258,19 +260,20 @@ curl -X POST \
 
 **Request Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `max_repos` | integer | Yes | Maximum number of repositories to process. Must be > 0 per [routers.AutoGenerate()](server/routers/auto_generate.go:43). |
-| `since` | string | No | Time period for trending repos ("daily", "weekly", "monthly"). |
-| `spoken_language_code` | string | No | Spoken language filter for GitHub Trending. |
-| `llm_output_language` | string | No | Comma-separated language codes for output (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
-| `llm_provider` | string | No | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes"). |
-| `llm_config` | object | No | Optional provider-specific configuration map; system prompt augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127). |
-| `use_direct_url` | boolean | No | If true, the repository URL string is used directly as LLM input instead of README content. |
+| Parameter              | Type    | Required | Description                                                                                                                                                                                                                           |
+| ---------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_repos`            | integer | Yes      | Maximum number of repositories to process. Must be > 0 per [routers.AutoGenerate()](server/routers/auto_generate.go:43).                                                                                                              |
+| `since`                | string  | No       | Time period for trending repos ("daily", "weekly", "monthly").                                                                                                                                                                        |
+| `spoken_language_code` | string  | No       | Spoken language filter for GitHub Trending.                                                                                                                                                                                           |
+| `llm_output_language`  | string  | No       | Comma-separated language codes for output (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
+| `llm_provider`         | string  | No       | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes").                                                                                                                                                       |
+| `llm_config`           | object  | No       | Optional provider-specific configuration map; system prompt augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127).                                                                                    |
+| `use_direct_url`       | boolean | No       | If true, the repository URL string is used directly as LLM input instead of README content.                                                                                                                                           |
 
 **Request Examples:**
 
 1. Basic request:
+
 ```json
 {
   "max_repos": 5,
@@ -280,6 +283,7 @@ curl -X POST \
 ```
 
 2. Request with Chutes.ai provider:
+
 ```json
 {
   "max_repos": 3,
@@ -291,6 +295,7 @@ curl -X POST \
 ```
 
 3. Multilingual request:
+
 ```json
 {
   "max_repos": 5,
@@ -338,19 +343,20 @@ curl -X POST \
 
 **Request Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `limit` | integer | No | Maximum number of repositories to return. Set to 0 to either return all records (if page and page_size are not specified) or use pagination mode (if page or page_size are specified). |
-| `posted` | boolean | No | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status. |
-| `sort_by` | string | No | Field to sort results by. Valid values: `id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
-| `sort_order` | string | No | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`. |
-| `page` | integer | No | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination. |
-| `page_size` | integer | No | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination. |
-| `text_language` | string | No | Optional. When omitted, raw multilingual text is returned in the original format, for example "===(en)text===(uk)text===". When provided (e.g., "en", "uk"), the API extracts and returns only the specified language’s text. |
+| Parameter       | Type    | Required | Description                                                                                                                                                                                                                                                                                        |
+| --------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `limit`         | integer | No       | Maximum number of repositories to return. Set to 0 to either return all records (if page and page_size are not specified) or use pagination mode (if page or page_size are specified).                                                                                                             |
+| `posted`        | boolean | No       | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status.                                                                                                                                                                            |
+| `sort_by`       | string  | No       | Field to sort results by. Valid values: `id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
+| `sort_order`    | string  | No       | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`.                                                                                                                                                                                                           |
+| `page`          | integer | No       | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination.                                                                                                                                                       |
+| `page_size`     | integer | No       | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination.                                                                                                                                                                        |
+| `text_language` | string  | No       | Optional. When omitted, raw multilingual text is returned in the original format, for example "===(en)text===(uk)text===". When provided (e.g., "en", "uk"), the API extracts and returns only the specified language’s text.                                                                      |
 
 **Request Examples:**
 
 1. Get all records without pagination:
+
 ```json
 {
   "limit": 0,
@@ -361,6 +367,7 @@ curl -X POST \
 ```
 
 2. Get records with pagination:
+
 ```json
 {
   "limit": 0,
@@ -373,6 +380,7 @@ curl -X POST \
 ```
 
 3. Get limited number of records:
+
 ```json
 {
   "limit": 5,
@@ -383,6 +391,7 @@ curl -X POST \
 ```
 
 4. **Example: Specifying text_language: 'uk' returns only the Ukrainian text**
+
 ```json
 {
   "limit": 10,
@@ -391,6 +400,7 @@ curl -X POST \
 ```
 
 5. ** Get English text with pagination:**
+
 ```json
 {
   "limit": 0,
@@ -401,14 +411,17 @@ curl -X POST \
 ```
 
 6. **Example: Without text_language (raw multilingual text)**
+
 ```json
 {
   "limit": 10
 }
 ```
+
 Returns raw multilingual text segments in the original format, e.g., "===(en)text===(uk)text===".
 
 **Pagination Details:**
+
 - When `limit` is 0:
   - If neither `page` nor `page_size` are specified, returns all matching records without pagination. In this case, `page=0`, `page_size=0`, `total_pages=1`, and `total_items` equals the count of all matching records.
   - If either `page` or `page_size` are specified, pagination mode is used.
@@ -458,12 +471,14 @@ Returns raw multilingual text segments in the original format, e.g., "===(en)tex
 ```
 
 Additional Response Example (raw multilingual text):
+
 ```json
 {
   "text": "===(en)An open-source project===(uk)Відкритий проект===",
   "... other fields ...": "..."
 }
 ```
+
 Note: This indicates raw multilingual text as stored.
 
 ---
@@ -516,10 +531,12 @@ curl -X PATCH \
 **Method:** `PATCH`
 
 **Description:** Updates the repository text with two modes:
+
 - Full replace when `text_language` is omitted.
 - Strict language-specific update when `text_language` is provided. If the specified language does not exist in the existing multilingual content, returns 422 Unprocessable Entity.
 
 **Request Schema:**
+
 - Exactly one of `id` or `url` must be provided
 - `text` is required
 - `text_language` is optional (language code). When provided, triggers language-specific update.
@@ -527,7 +544,8 @@ curl -X PATCH \
 
 **Curl and JSON Examples:**
 
-1) Full replace (no text_language):
+1. Full replace (no text_language):
+
 ```bash
 curl -X PATCH \
   'http://localhost:8080/think-root/api/update-repository-text/' \
@@ -538,10 +556,12 @@ curl -X PATCH \
     "text": "Updated text content via ID"
   }'
 ```
+
 Result in DB: "Updated text content via ID"
 Response includes `available_languages` (for plain: ["uk"]) and omits `updated_language`.
 
-2) Language update on existing multilingual:
+2. Language update on existing multilingual:
+
 ```bash
 curl -X PATCH \
   'http://localhost:8080/think-root/api/update-repository-text/' \
@@ -553,9 +573,11 @@ curl -X PATCH \
     "text_language": "en"
   }'
 ```
+
 Result in DB: only the `en` segment updated; other segments unchanged.
 
-3) Language update on plain existing text:
+3. Language update on plain existing text:
+
 ```bash
 curl -X PATCH \
   'http://localhost:8080/think-root/api/update-repository-text/' \
@@ -567,9 +589,11 @@ curl -X PATCH \
     "text_language": "uk"
   }'
 ```
+
 Result in DB: "===(uk)тут якийсь текст==="
 
-4) Error when language missing in existing multilingual:
+4. Error when language missing in existing multilingual:
+
 ```bash
 curl -X PATCH \
   'http://localhost:8080/think-root/api/update-repository-text/' \
@@ -581,20 +605,22 @@ curl -X PATCH \
     "text_language": "pl"
   }'
 ```
+
 Response: `422 Unprocessable Entity` with message `language 'pl' not found in existing content`.
 
 **Request Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | integer | No* | Repository ID (positive integer) |
-| `url` | string | No* | Repository URL (non-empty string) |
-| `text` | string | Yes | New text content (1-1000 characters, valid UTF-8) |
-| `text_language` | string | No | Optional language code. When provided, performs a language-specific update (validated). |
+| Parameter       | Type    | Required | Description                                                                             |
+| --------------- | ------- | -------- | --------------------------------------------------------------------------------------- |
+| `id`            | integer | No\*     | Repository ID (positive integer)                                                        |
+| `url`           | string  | No\*     | Repository URL (non-empty string)                                                       |
+| `text`          | string  | Yes      | New text content (1-1000 characters, valid UTF-8)                                       |
+| `text_language` | string  | No       | Optional language code. When provided, performs a language-specific update (validated). |
 
-*Exactly one of `id` or `url` must be provided.
+\*Exactly one of `id` or `url` must be provided.
 
 **Validation Rules:**
+
 - Exactly one identifier (`id` or `url`) must be provided
 - `text` is required and non-empty
 - `text` length ≤ 1000 characters
@@ -602,6 +628,7 @@ Response: `422 Unprocessable Entity` with message `language 'pl' not found in ex
 - `text_language` validated via [language.ValidateLanguageCodes()](server/language_validator.go:25)
 
 **Response Fields:**
+
 - `status` and `message`
 - `data.id`, `data.url`, `data.text` (final text stored)
 - `data.updated_language` present only when `text_language` is provided
@@ -611,6 +638,7 @@ Response: `422 Unprocessable Entity` with message `language 'pl' not found in ex
 **Success Response Examples:**
 
 Full replace (plain text):
+
 ```json
 {
   "status": "ok",
@@ -626,6 +654,7 @@ Full replace (plain text):
 ```
 
 Language-specific update:
+
 ```json
 {
   "status": "ok",
@@ -635,13 +664,14 @@ Language-specific update:
     "url": "https://github.com/example/repo",
     "text": "Updated text content via ID",
     "updated_language": "en",
-    "available_languages": ["en","uk"],
+    "available_languages": ["en", "uk"],
     "updated_at": "2025-06-22T15:00:00Z"
   }
 }
 ```
 
 **Error Response Example (missing language in existing multilingual):**
+
 ```json
 {
   "status": "error",
@@ -662,6 +692,7 @@ Language-specific update:
 **Curl Examples:**
 
 Delete by ID:
+
 ```bash
 curl -X DELETE \
   'http://localhost:8080/think-root/api/delete-repository/' \
@@ -673,6 +704,7 @@ curl -X DELETE \
 ```
 
 Delete by URL:
+
 ```bash
 curl -X DELETE \
   'http://localhost:8080/think-root/api/delete-repository/' \
@@ -685,16 +717,17 @@ curl -X DELETE \
 
 **Request Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | integer | No* | Repository ID (positive integer) |
-| `url` | string | No* | Repository URL (non-empty string) |
+| Parameter | Type    | Required | Description                       |
+| --------- | ------- | -------- | --------------------------------- |
+| `id`      | integer | No\*     | Repository ID (positive integer)  |
+| `url`     | string  | No\*     | Repository URL (non-empty string) |
 
-*Either `id` or `url` must be provided, but not both.
+\*Either `id` or `url` must be provided, but not both.
 
 **Request Examples:**
 
 1. Delete by ID:
+
 ```json
 {
   "id": 123
@@ -702,6 +735,7 @@ curl -X DELETE \
 ```
 
 2. Delete by URL:
+
 ```json
 {
   "url": "https://github.com/example/awesome-project"
@@ -709,11 +743,13 @@ curl -X DELETE \
 ```
 
 **Validation Rules:**
+
 - Exactly one identifier (`id` or `url`) must be provided
 - ID must be a positive integer if provided
 - URL must be a non-empty string if provided
 
 **Status Codes:**
+
 - 200: Success - Repository deleted
 - 400: Bad Request - Validation errors
 - 401: Unauthorized - Invalid or missing Bearer token
@@ -766,11 +802,13 @@ curl -X DELETE \
 The Chutes.ai provider supports the moonshotai/Kimi-K2-Instruct-0905 model and other OpenAI-compatible models. Here's how to use it:
 
 **Environment Setup:**
+
 ```bash
 export CHUTES_API_TOKEN="your_chutes_api_token_here"
 ```
 
 **Basic Usage Example:**
+
 ```bash
 curl -X POST \
   'http://localhost:8080/think-root/api/manual-generate/' \
@@ -784,6 +822,7 @@ curl -X POST \
 ```
 
 **Multilingual Generation with Chutes:**
+
 ```bash
 curl -X POST \
   'http://localhost:8080/think-root/api/auto-generate/' \
@@ -799,11 +838,11 @@ curl -X POST \
 
 ### Provider Comparison
 
-| Provider | Model Examples | Best For |
-|----------|---------------|----------|
-| Mistral AI | mistral-large-latest | European languages, technical content |
-| OpenAI | gpt-4-turbo | General purpose, creative content |
-| OpenRouter | claude-3, gpt-4 | Flexibility, multiple models |
+| Provider      | Model Examples                   | Best For                                          |
+| ------------- | -------------------------------- | ------------------------------------------------- |
+| Mistral AI    | mistral-large-latest             | European languages, technical content             |
+| OpenAI        | gpt-4-turbo                      | General purpose, creative content                 |
+| OpenRouter    | claude-3, gpt-4                  | Flexibility, multiple models                      |
 | **Chutes.ai** | moonshotai/Kimi-K2-Instruct-0905 | **New!** Advanced reasoning, multilingual support |
 
 ## 🧑‍💻 Development Setup
