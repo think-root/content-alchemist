@@ -213,12 +213,17 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]getRepositoryItem, len(repositories))
 	for i, repo := range repositories {
-		// Process text based on language parameter
-		processedText, err := processTextForLanguage(repo.Text, reqBody.TextLanguage)
-		if err != nil {
-			log.Printf("Error processing text for repository %d: %v", repo.ID, err)
-			server.RespondJSON(w, http.StatusBadRequest, "error", err.Error(), nil)
-			return
+		var processedText string
+		if reqBody.TextLanguage == "" {
+			processedText = repo.Text
+		} else {
+			var err error
+			processedText, err = processTextForLanguage(repo.Text, reqBody.TextLanguage)
+			if err != nil {
+				log.Printf("Error processing text for repository %d: %v", repo.ID, err)
+				server.RespondJSON(w, http.StatusBadRequest, "error", err.Error(), nil)
+				return
+			}
 		}
 
 		items[i] = getRepositoryItem{
