@@ -1,3 +1,22 @@
+# [2.0.0](https://github.com/think-root/content-alchemist/compare/v1.17.0...v2.0.0) (2025-10-12)
+
+
+### Bug Fixes
+
+* **router:** return raw repository text if language parameter is missing ([8e4ed5c](https://github.com/think-root/content-alchemist/commit/8e4ed5c40ec4786b050f1d29f415579c53467a97))
+
+
+### Features
+
+* **router:** add optional text_language field for multilingual updates ([958468e](https://github.com/think-root/content-alchemist/commit/958468e9f420fe81f50d612e00ff16f49aac0f6a))
+
+
+### BREAKING CHANGES
+
+* **router:** callers must provide the language in the request body
+using `text_language`; the previous `lang` query parameter is no longer
+supported.
+
 # [1.17.0](https://github.com/think-root/content-alchemist/compare/v1.16.0...v1.17.0) (2025-09-06)
 
 
