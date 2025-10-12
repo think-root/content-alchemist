@@ -117,8 +117,6 @@ Content Alchemist now supports generating and retrieving repository descriptions
 - **Flexible text formats**: Support for single language and multilingual text formats
 - **Automatic validation**: Language codes are validated against ISO 639-1 standards
 
----
-
 ## 🔌 API
 
 API documentation is available here: [API.md](API.md).

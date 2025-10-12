@@ -83,8 +83,6 @@ curl -X POST \
 }
 ```
 
----
-
 ### /api/auto-generate/
 
 **Endpoint:** `/think-root/api/auto-generate/`
@@ -165,8 +163,6 @@ curl -X POST \
   "dont_added": ["https://github.com/example/repo3"]
 }
 ```
-
----
 
 ### /api/get-repository/
 
@@ -332,8 +328,6 @@ Additional Response Example (raw multilingual text):
 
 Note: This indicates raw multilingual text as stored.
 
----
-
 ### /api/update-posted/
 
 **Endpoint:** `/think-root/api/update-posted/`
@@ -372,8 +366,6 @@ curl -X PATCH \
   "message": "Posted status updated successfully"
 }
 ```
-
----
 
 ### /api/update-repository-text/
 
@@ -530,8 +522,6 @@ Language-specific update:
 }
 ```
 
----
-
 ### /api/delete-repository/
 
 **Endpoint:** `/think-root/api/delete-repository/`
@@ -646,14 +636,11 @@ curl -X DELETE \
 }
 ```
 
-
----
-
 ## Additional Quick Examples
 
 These are convenience examples that were previously shown in the main README.
 
-1) Generate content in multiple languages (facebook/react example):
+1. Generate content in multiple languages (facebook/react example):
 
 ```bash
 curl -X POST \
@@ -666,7 +653,7 @@ curl -X POST \
   }'
 ```
 
-2) Retrieve content in Ukrainian:
+2. Retrieve content in Ukrainian:
 
 ```bash
 curl -X POST \
