@@ -11,7 +11,8 @@ services:
     ports:
       - "${API_PORT:-9111}:${API_PORT:-9111}"
     networks:
-      - think-root-network
+      think-root-network:
+        mac_address: 02:42:ac:13:00:09
 
 networks:
   think-root-network:
