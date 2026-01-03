@@ -1,4 +1,4 @@
-# 🔌 API
+# API
 
 > [!IMPORTANT]
 > All API requests must include an Authorization header in the following format:
