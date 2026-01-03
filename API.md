@@ -635,33 +635,3 @@ curl -X DELETE \
   "message": "repository with URL https://github.com/example/repo not found"
 }
 ```
-
-## Additional Quick Examples
-
-These are convenience examples that were previously shown in the main README.
-
-1. Generate content in multiple languages (facebook/react example):
-
-```bash
-curl -X POST \
-  'http://localhost:8080/think-root/api/manual-generate/' \
-  -H 'Authorization: Bearer <BEARER_TOKEN>' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "url": "https://github.com/facebook/react",
-    "llm_output_language": "en,uk,fr"
-  }'
-```
-
-2. Retrieve content in Ukrainian:
-
-```bash
-curl -X POST \
-  'http://localhost:8080/think-root/api/get-repository/' \
-  -H 'Authorization: Bearer <BEARER_TOKEN>' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "limit": 5,
-    "text_language": "uk"
-  }'
-```
