@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/think-root/content-alchemist/compare/v2.0.0...v2.1.0) (2026-01-04)
+
+
+### Features
+
+* **parser:** add retry logic and browser headers for HTTP requests ([761aa1c](https://github.com/think-root/content-alchemist/commit/761aa1c78c8a3f09e8721de3f05e38c35d5a548a))
+
 # [2.0.0](https://github.com/think-root/content-alchemist/compare/v1.17.0...v2.0.0) (2025-10-12)
 
 
