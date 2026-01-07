@@ -1,3 +1,17 @@
+# [2.2.0](https://github.com/think-root/content-alchemist/compare/v2.1.0...v2.2.0) (2026-01-07)
+
+
+### Bug Fixes
+
+* **llm:** stop overriding chutes model ([bad9945](https://github.com/think-root/content-alchemist/commit/bad9945bbd0f43e5a45876a76e2e3c0a7a2589a5))
+* **routers:** set 500 for manual generate errors ([0ad567b](https://github.com/think-root/content-alchemist/commit/0ad567b4317a5b2b920e16ec560eec34fc50b653))
+
+
+### Features
+
+* **auto:** add configurable trending resource selection ([eac3659](https://github.com/think-root/content-alchemist/commit/eac3659c5dd4c8d828dcc118c258940c20adcdc1))
+* **parser:** add ossinsight trending repo fetcher ([88b7971](https://github.com/think-root/content-alchemist/commit/88b79715a1afd494caf0a340ffff9b9edc7c4a55))
+
 # [2.1.0](https://github.com/think-root/content-alchemist/compare/v2.0.0...v2.1.0) (2026-01-04)
 
 
