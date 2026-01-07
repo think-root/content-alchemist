@@ -24,46 +24,90 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
     "url": "https://github.com/example/repo",
-    "llm_output_language": "en,uk,fr"
+    "llm_output_language": "en,uk,fr",
+    "llm_provider": "mistral_api",
+    "llm_config": {
+      "model": "mistral-small-latest"
+    }
   }'
 ```
 
 **Request Parameters:**
 
-| Parameter             | Type    | Required | Description                                                                                                                                                                                                                |
-| --------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `url`                 | string  | Yes      | GitHub repository URL. Supports multiple whitespace-separated URLs to process in a single request.                                                                                                                         |
-| `llm_output_language` | string  | No       | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
-| `llm_provider`        | string  | No       | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes").                                                                                                                                            |
-| `llm_config`          | object  | No       | Optional provider-specific configuration map (includes messages; system prompt is augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127)).                                                  |
-| `use_direct_url`      | boolean | No       | If true, the URL string is used directly as LLM input instead of README content.                                                                                                                                           |
+| Parameter               | Type    | Required | Description                                                                                                                                                                                                         |
+| ----------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                 | string  | Yes      | GitHub repository URL. Supports multiple whitespace-separated URLs to process in a single request.                                                                                                                  |
+| `llm_output_language` | string  | No       | Comma-separated language codes (e.g., "en,uk,fr"). Default: "uk".                                                                                                                                                    |
+| `llm_provider`        | string  | No       | LLM provider name. Values: `mistral_api` (default), `openai`, `openrouter`, `chutes`. If omitted, defaults to `mistral_api`.                                                                                         |
+| `llm_config`          | object  | Yes*     | Provider configuration. **Required** for all providers to specify at least the `model`. See llm_config Structure section below.                                                                                     |
+| `use_direct_url`      | boolean | No       | If true, the URL string is used directly as LLM input instead of README content.                                                                                                                                    |
 
-**Request Examples:**
+\* `llm_config` is required for all providers to specify the model.
 
-1. Basic request (Ukrainian only):
+**`llm_config` Structure:**
+
+The `llm_config` object is passed to the LLM provider's chat completion API. Common parameters:
+
+-   `model`: (Required) The model ID (e.g., `mistral-small-latest`, `gpt-4o`, `google/gemini-2.0-flash-exp:free`, `moonshotai/Kimi-K2-Instruct-0905`).
+-   `temperature`: (Optional) Sampling temperature (0.0 to 1.0).
+-   `max_tokens`: (Optional) Maximum tokens to generate.
+-   `top_p`: (Optional) Nucleus sampling probability.
+-   `messages`: (Optional) Array of message objects to specify a custom prompt. See below.
+
+**Custom Prompt:**
+
+You can provide a custom system prompt via the `messages` array. The server will **append** its multilingual instructions to your prompt:
 
 ```json
-{
-  "url": "https://github.com/example/repo"
+"llm_config": {
+  "model": "mistral-small-latest",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Your custom prompt here. Describe repos in a fun, engaging way."
+    }
+  ]
 }
 ```
 
-2. Request with specific AI provider:
+If you don't provide a `messages` array, the server creates one with default multilingual instructions.
+
+**Request Examples:**
+
+1. Basic request with Mistral (default provider):
+
+```json
+{
+  "url": "https://github.com/example/repo",
+  "llm_config": {
+    "model": "mistral-small-latest"
+  }
+}
+```
+
+2. Request with Chutes provider:
 
 ```json
 {
   "url": "https://github.com/example/repo",
   "llm_provider": "chutes",
-  "llm_output_language": "en"
+  "llm_output_language": "en",
+  "llm_config": {
+    "model": "moonshotai/Kimi-K2-Instruct-0905"
+  }
 }
 ```
 
-3. Multilingual request:
+3. Multilingual request with OpenRouter:
 
 ```json
 {
   "url": "https://github.com/example/repo",
-  "llm_output_language": "en,uk,fr"
+  "llm_output_language": "en,uk,fr",
+  "llm_provider": "openrouter",
+  "llm_config": {
+    "model": "google/gemini-2.0-flash-exp:free"
+  }
 }
 ```
 
@@ -89,7 +133,7 @@ curl -X POST \
 
 **Method:** `POST`
 
-**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database. Supports multilingual text generation.
+**Description:** This endpoint is used to automatically parse trending repositories and generate description based on certain parameters. It also adds the generated posts to the database. Supports multilingual text generation. Supports multiple data sources (GitHub, OssInsight).
 
 **Curl Example:**
 
@@ -100,34 +144,77 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
     "max_repos": 5,
+    "resource": "github",
     "since": "weekly",
     "spoken_language_code": "en",
     "llm_output_language": "en,uk,fr",
-    "llm_provider": "chutes"
+    "llm_provider": "mistral_api",
+    "llm_config": {
+      "model": "mistral-small-latest"
+    }
   }'
 ```
 
 **Request Parameters:**
 
-| Parameter              | Type    | Required | Description                                                                                                                                                                                                                           |
-| ---------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `max_repos`            | integer | Yes      | Maximum number of repositories to process. Must be > 0 per [routers.AutoGenerate()](server/routers/auto_generate.go:43).                                                                                                              |
-| `since`                | string  | No       | Time period for trending repos ("daily", "weekly", "monthly").                                                                                                                                                                        |
-| `spoken_language_code` | string  | No       | Spoken language filter for GitHub Trending.                                                                                                                                                                                           |
-| `llm_output_language`  | string  | No       | Comma-separated language codes for output (e.g., "en,uk,fr"). Default: "uk". Validated via [language.ParseLanguageCodes()](server/language_validator.go:104) and [language.ValidateLanguageCodes()](server/language_validator.go:26). |
-| `llm_provider`         | string  | No       | Optional LLM provider name (e.g., "mistral", "openai", "openrouter", "chutes").                                                                                                                                                       |
-| `llm_config`           | object  | No       | Optional provider-specific configuration map; system prompt augmented with [language.BuildMultilingualPrompt()](server/language_validator.go:127).                                                                                    |
-| `use_direct_url`       | boolean | No       | If true, the repository URL string is used directly as LLM input instead of README content.                                                                                                                                           |
+| Parameter                | Type    | Required | Description                                                                                                                                                                                                                    |
+| ------------------------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `max_repos`            | integer | Yes      | Maximum number of repositories to process. Must be > 0.                                                                                                                                                                        |
+| `resource`             | string  | No       | Data source. Values: `github` (default), `ossinsight`.                                                                                                                                                                         |
+| `since`                | string  | No       | **For GitHub resource**: Time period for trending repos (`daily`, `weekly`, `monthly`).                                                                                                                                        |
+| `spoken_language_code` | string  | No       | **For GitHub resource**: Spoken language filter for GitHub Trending.                                                                                                                                                           |
+| `period`               | string  | No       | **For OssInsight resource**: Time period (`past_24_hours`, `past_week`, `past_month`, `past_3_months`). Default: `past_24_hours`.                                                                                              |
+| `language`             | string  | No       | **For OssInsight resource**: Programming language filter (e.g., `Python`, `All`). Default: `All`.                                                                                                                              |
+| `llm_output_language`  | string  | No       | Comma-separated language codes for output (e.g., `en,uk,fr`). Default: `uk`.                                                                                                                                                   |
+| `llm_provider`         | string  | No       | LLM provider name. Values: `mistral_api` (default), `openai`, `openrouter`, `chutes`. If omitted, defaults to `mistral_api`.                                                                                                   |
+| `llm_config`           | object  | Yes*     | Provider configuration. **Required** for all providers to specify at least the `model`.                                                                                                                                        |
+| `use_direct_url`       | boolean | No       | If true, the repository URL string is used directly as LLM input instead of README content.                                                                                                                                    |
+
+\* `llm_config` is required for all providers to specify the model.
+
+**`llm_config` Structure:**
+
+The `llm_config` object is passed as the JSON body to the chosen LLM provider's chat completion API (e.g., OpenAI, Mistral, OpenRouter). Common parameters include:
+
+-   `model`: (Required) The ID of the model to use (e.g., `gpt-4o`, `mistral-large-latest`, `google/gemini-2.0-flash-exp:free`).
+-   `temperature`: (Optional) Sampling temperature (0.0 to 1.0). Higher values mean more random output.
+-   `max_tokens`: (Optional) The maximum number of tokens to generate.
+-   `top_p`: (Optional) Nucleus sampling probability.
+-   `stream`: (Optional) Boolean to stream responses (usually `false` for this API).
+-   `messages`: (Optional) Array of message objects to specify a custom prompt. See below.
+
+**Custom Prompt:**
+
+You can provide a custom system prompt via the `messages` array. The server will **append** its multilingual instructions to your custom prompt:
+
+```json
+"llm_config": {
+  "model": "google/gemini-2.0-flash-exp:free",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Your custom prompt here. Be concise and creative."
+    }
+  ]
+}
+```
+
+If you don't provide a `messages` array, the server creates one with default multilingual instructions based on `llm_output_language`.
 
 **Request Examples:**
 
-1. Basic request:
+1. Basic request (GitHub source):
 
 ```json
 {
   "max_repos": 5,
+  "resource": "github",
   "since": "weekly",
-  "spoken_language_code": "en"
+  "spoken_language_code": "en",
+  "llm_provider": "mistral_api",
+  "llm_config": {
+    "model": "mistral-tiny"
+  }
 }
 ```
 
@@ -139,18 +226,42 @@ curl -X POST \
   "since": "daily",
   "spoken_language_code": "en",
   "llm_provider": "chutes",
-  "llm_output_language": "uk,en"
+  "llm_output_language": "uk,en",
+  "llm_config": {
+    "model": "moonshotai/Kimi-K2-Instruct-0905",
+    "temperature": 0.5,
+    "max_tokens": 1024
+  }
 }
 ```
 
-3. Multilingual request:
+3. Multilingual request with OpenRouter:
 
 ```json
 {
   "max_repos": 5,
   "since": "weekly",
   "spoken_language_code": "en",
-  "llm_output_language": "en,uk,fr"
+  "llm_output_language": "en,uk,fr",
+  "llm_provider": "openrouter",
+  "llm_config": {
+    "model": "google/gemini-2.0-flash-exp:free"
+  }
+}
+```
+
+4. Request using OssInsight source:
+
+```json
+{
+  "max_repos": 10,
+  "resource": "ossinsight",
+  "period": "past_month",
+  "language": "Python",
+  "llm_provider": "mistral_api",
+  "llm_config": {
+    "model": "mistral-small"
+  }
 }
 ```
 
@@ -190,15 +301,15 @@ curl -X POST \
 
 **Request Parameters:**
 
-| Parameter       | Type    | Required | Description                                                                                                                                                                                                                                                                                        |
-| --------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `limit`         | integer | No       | Maximum number of repositories to return. Set to 0 to either return all records (if page and page_size are not specified) or use pagination mode (if page or page_size are specified).                                                                                                             |
-| `posted`        | boolean | No       | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status.                                                                                                                                                                            |
-| `sort_by`       | string  | No       | Field to sort results by. Valid values: `id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
-| `sort_order`    | string  | No       | Order of sorting. Valid values: `ASC` (ascending), `DESC` (descending). Default: `DESC`.                                                                                                                                                                                                           |
-| `page`          | integer | No       | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination.                                                                                                                                                       |
-| `page_size`     | integer | No       | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination.                                                                                                                                                                        |
-| `text_language` | string  | No       | Optional. When omitted, raw multilingual text is returned in the original format, for example "===(en)text===(uk)text===". When provided (e.g., "en", "uk"), the API extracts and returns only the specified language’s text.                                                                      |
+| Parameter         | Type    | Required | Description                                                                                                                                                                                                                                                                                                   |
+| ----------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `limit`         | integer | No       | Maximum number of repositories to return. Set to 0 to either return all records (if page and page_size are not specified) or use pagination mode (if page or page_size are specified).                                                                                                                        |
+| `posted`        | boolean | No       | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status.                                                                                                                                                                                       |
+| `sort_by`       | string  | No       | Field to sort results by. Valid values:`id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
+| `sort_order`    | string  | No       | Order of sorting. Valid values:`ASC` (ascending), `DESC` (descending). Default: `DESC`.                                                                                                                                                                                                                 |
+| `page`          | integer | No       | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination.                                                                                                                                                                  |
+| `page_size`     | integer | No       | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination.                                                                                                                                                                                   |
+| `text_language` | string  | No       | Optional. When omitted, raw multilingual text is returned in the original format, for example "===(en)text===(uk)text===". When provided (e.g., "en", "uk"), the API extracts and returns only the specified language’s text.                                                                                |
 
 **Request Examples:**
 
@@ -453,8 +564,8 @@ Response: `422 Unprocessable Entity` with message `language 'pl' not found in ex
 
 **Request Parameters:**
 
-| Parameter       | Type    | Required | Description                                                                             |
-| --------------- | ------- | -------- | --------------------------------------------------------------------------------------- |
+| Parameter         | Type    | Required | Description                                                                             |
+| ----------------- | ------- | -------- | --------------------------------------------------------------------------------------- |
 | `id`            | integer | No\*     | Repository ID (positive integer)                                                        |
 | `url`           | string  | No\*     | Repository URL (non-empty string)                                                       |
 | `text`          | string  | Yes      | New text content (1-1000 characters, valid UTF-8)                                       |
@@ -560,8 +671,8 @@ curl -X DELETE \
 
 | Parameter | Type    | Required | Description                       |
 | --------- | ------- | -------- | --------------------------------- |
-| `id`      | integer | No\*     | Repository ID (positive integer)  |
-| `url`     | string  | No\*     | Repository URL (non-empty string) |
+| `id`    | integer | No\*     | Repository ID (positive integer)  |
+| `url`   | string  | No\*     | Repository URL (non-empty string) |
 
 \*Either `id` or `url` must be provided, but not both.
 
