@@ -24,10 +24,6 @@ func Chutes(requestBody map[string]any) (string, error) {
 		return "", fmt.Errorf("messages field is required in request body")
 	}
 
-	// Ensure model is set, default to moonshotai/Kimi-K2-Instruct-0905 if not specified
-	if _, ok := requestBody["model"]; !ok {
-		requestBody["model"] = "moonshotai/Kimi-K2-Instruct-0905"
-	}
 
 	// Set default parameters for Chutes API
 	if _, ok := requestBody["max_tokens"]; !ok {
