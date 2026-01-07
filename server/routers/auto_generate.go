@@ -15,6 +15,9 @@ type autoGenerateRequest struct {
 	MaxRepos           int            `json:"max_repos"`
 	Since              string         `json:"since"`
 	SpokenLanguageCode string         `json:"spoken_language_code"`
+	Resource           string         `json:"resource"`
+	Period             string         `json:"period"`
+	Language           string         `json:"language"`
 	LLMProvider        string         `json:"llm_provider,omitempty"`
 	LLMConfig          map[string]any `json:"llm_config,omitempty"`
 	UseDirectURL       bool           `json:"use_direct_url,omitempty"`
@@ -45,10 +48,25 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repos, err := parser.GetTrendingRepos(reqBody.MaxRepos, reqBody.Since, reqBody.SpokenLanguageCode)
+	var repos []parser.Repository
+	var err error
+
+	if reqBody.Resource == "" {
+		reqBody.Resource = "github"
+	}
+
+	switch reqBody.Resource {
+	case "ossinsight":
+		repos, err = parser.GetTrendingReposFromOssInsight(reqBody.MaxRepos, reqBody.Period, reqBody.Language)
+	case "github":
+		repos, err = parser.GetTrendingRepos(reqBody.MaxRepos, reqBody.Since, reqBody.SpokenLanguageCode)
+	default:
+		repos, err = parser.GetTrendingRepos(reqBody.MaxRepos, reqBody.Since, reqBody.SpokenLanguageCode)
+	}
+
 	if err != nil {
-		log.Printf("Error fetching trending repositories: %v", err)
-		http.Error(w, "Failed to fetch trending repositories", http.StatusInternalServerError)
+		log.Printf("Error fetching trending repositories (source: %s): %v", reqBody.Resource, err)
+		http.Error(w, fmt.Sprintf("Failed to fetch trending repositories from %s", reqBody.Resource), http.StatusInternalServerError)
 		return
 	}
 
@@ -93,7 +111,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 
 		// Add multilingual prompt instructions to the system message or create one
 		multilingualPrompt := server.BuildMultilingualPrompt(languageCodes)
-		
+
 		// Handle messages in config
 		if messages, exists := llmConfig["messages"]; exists {
 			// Try different possible types for messages
@@ -112,7 +130,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				
+
 				// If no system message found, add one at the beginning
 				if !systemMessageFound {
 					systemMsg := map[string]any{
@@ -130,7 +148,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 						convertedMessages = append(convertedMessages, msgMap)
 					}
 				}
-				
+
 				// Look for existing system message
 				systemMessageFound := false
 				for i, msg := range convertedMessages {
@@ -144,7 +162,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				
+
 				// If no system message found, add one at the beginning
 				if !systemMessageFound {
 					systemMsg := map[string]any{
@@ -189,7 +207,11 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	if response.Status == "error" {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding response: %v", err)
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
