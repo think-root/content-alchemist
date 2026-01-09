@@ -8,8 +8,8 @@ import (
 func AddRepositoryToDB(url, text string) error {
 	now := time.Now()
 	query := `
-		INSERT INTO alchemist_github_repositories (url, text, date_added)
-		VALUES ($1, $2, $3)
+		INSERT INTO github_repositories (url, text, date_added)
+		VALUES (?, ?, ?)
 		ON CONFLICT (url) DO NOTHING
 	`
 	
