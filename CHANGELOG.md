@@ -1,3 +1,31 @@
+# [3.0.0](https://github.com/think-root/content-alchemist/compare/v2.2.0...v3.0.0) (2026-01-09)
+
+
+### Bug Fixes
+
+* **database:** update SQL queries to use ? placeholders ([b6107c7](https://github.com/think-root/content-alchemist/commit/b6107c7aff4ec26c39fd9300a1de5037d27396d9))
+* **db:** update query syntax for SQLite compatibility ([b38af90](https://github.com/think-root/content-alchemist/commit/b38af9010759682d6693da2c8429a517f8e1fa78))
+* **db:** update SQL queries to use parameterized placeholders ([18eb4f6](https://github.com/think-root/content-alchemist/commit/18eb4f6029fb79118813e98a6184e68cc9518f0a))
+* **db:** update SQL query for compatibility ([324c496](https://github.com/think-root/content-alchemist/commit/324c496b3325bd74d1ab3c505375be3ad286a6a2))
+* **db:** update table name in count query ([520f8e6](https://github.com/think-root/content-alchemist/commit/520f8e664d1941c722f3cd0fa5cecc3570ae617c))
+* **parser:** limit number of trending repos ([d8b8b59](https://github.com/think-root/content-alchemist/commit/d8b8b5934f5fc3e9f431ac66a393b5ef6476092d))
+* update SQLite DB path and add volume for persistence ([8c07bab](https://github.com/think-root/content-alchemist/commit/8c07bab1cbf95cd7382d329a8de513a2ed19ced5))
+
+
+* feat(db)!: migrate from PostgreSQL to SQLite ([e09212c](https://github.com/think-root/content-alchemist/commit/e09212c2fd584bae5837c4ec6902b0fce9186a31))
+
+
+### Features
+
+* **auto_generate:** add input validation for resource, period, and since ([9f68256](https://github.com/think-root/content-alchemist/commit/9f68256846a46fb41f597d1b2bfeb7ffd1bd3e85))
+* **config:** add EnvWithDefault function ([704dc49](https://github.com/think-root/content-alchemist/commit/704dc49cd3fa533dbe3f4992305a64b3f49e75da))
+* **config:** add SQLite DB path configuration ([78e47c2](https://github.com/think-root/content-alchemist/commit/78e47c235bb7d9ace54024c2d744cbd6936ba4f1))
+
+
+### BREAKING CHANGES
+
+* Migrate data from PostgreSQL to SQLite and update database initialization logic
+
 # [2.2.0](https://github.com/think-root/content-alchemist/compare/v2.1.0...v2.2.0) (2026-01-07)
 
 
