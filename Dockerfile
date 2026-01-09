@@ -6,8 +6,9 @@ RUN go mod download
 COPY . .
 EXPOSE 9111
 ARG APP_VERSION=dev
+RUN apk add --no-cache build-base
 RUN go mod tidy && \
-    go build -ldflags="-X 'content-alchemist/config.APP_VERSION=${APP_VERSION}'" -o content-alchemist ./cmd/server/main.go
+    CGO_ENABLED=1 go build -ldflags="-X 'content-alchemist/config.APP_VERSION=${APP_VERSION}'" -o content-alchemist ./cmd/server/main.go
 
 # Runtime
 FROM alpine:3.16
