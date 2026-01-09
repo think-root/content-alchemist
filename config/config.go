@@ -15,4 +15,5 @@ var (
 	POSTGRES_PASSWORD = Env("POSTGRES_PASSWORD")
 	POSTGRES_DB       = Env("POSTGRES_DB")
 	SERVER_PORT       = Env("SERVER_PORT")
+	SQLITE_DB_PATH    = EnvWithDefault("SQLITE_DB_PATH", "data/content-alchemist.db")
 )
