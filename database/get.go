@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -11,7 +12,6 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 	// Build WHERE clause
 	var whereClause string
 	var args []interface{}
-	argIndex := 1
 
 	if posted != nil {
 		var postedValue int
@@ -20,9 +20,8 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 		} else {
 			postedValue = 0
 		}
-		whereClause = fmt.Sprintf("WHERE posted = $%d", argIndex)
+		whereClause = "WHERE posted = ?"
 		args = append(args, postedValue)
-		argIndex++
 	}
 
 	// Build ORDER BY clause
@@ -52,24 +51,23 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 	}
 
 	// Count total records
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM alchemist_github_repositories %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM github_repositories %s", whereClause)
 	err := DBThinkRoot.QueryRow(countQuery, args...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error counting total repositories: %v", err)
 	}
 
 	// Build data query
-	dataQuery := fmt.Sprintf("SELECT id, url, text, posted, date_added, date_posted FROM alchemist_github_repositories %s ORDER BY %s", whereClause, orderBy)
+	dataQuery := fmt.Sprintf("SELECT id, url, text, posted, date_added, date_posted FROM github_repositories %s ORDER BY %s", whereClause, orderBy)
 
 	// Add LIMIT and OFFSET
 	if limit > 0 {
-		dataQuery += fmt.Sprintf(" LIMIT $%d", argIndex)
+		dataQuery += " LIMIT ?"
 		args = append(args, limit)
-		argIndex++
 	}
 
 	if offset > 0 {
-		dataQuery += fmt.Sprintf(" OFFSET $%d", argIndex)
+		dataQuery += " OFFSET ?"
 		args = append(args, offset)
 	}
 
@@ -105,14 +103,14 @@ func GetRepositoryByIDOrURL(identifier string, isID bool) (*GithubRepositories, 
 	if isID {
 		query = `
 			SELECT id, url, text, posted, date_added, date_posted
-			FROM alchemist_github_repositories
-			WHERE id = $1
+			FROM github_repositories
+			WHERE id = ?
 		`
 	} else {
 		query = `
 			SELECT id, url, text, posted, date_added, date_posted
-			FROM alchemist_github_repositories
-			WHERE url = $1
+			FROM github_repositories
+			WHERE url = ?
 		`
 	}
 
@@ -126,7 +124,7 @@ func GetRepositoryByIDOrURL(identifier string, isID bool) (*GithubRepositories, 
 	)
 
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if err == sql.ErrNoRows {
 			if isID {
 				return nil, fmt.Errorf("repository with ID %s not found", identifier)
 			} else {
