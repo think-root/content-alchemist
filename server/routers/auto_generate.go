@@ -55,12 +55,43 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		reqBody.Resource = "github"
 	}
 
+	// Validate Resource
+	validResources := map[string]bool{
+		"github":     true,
+		"ossinsight": true,
+	}
+	if !validResources[reqBody.Resource] {
+		http.Error(w, fmt.Sprintf("Invalid resource: %s. Allowed values: github, ossinsight", reqBody.Resource), http.StatusBadRequest)
+		return
+	}
+
 	switch reqBody.Resource {
 	case "ossinsight":
+		// Validate Period
+		validPeriods := map[string]bool{
+			"past_24_hours": true,
+			"past_week":     true,
+			"past_month":    true,
+			"past_3_months": true,
+		}
+		if reqBody.Period != "" && !validPeriods[reqBody.Period] {
+			http.Error(w, fmt.Sprintf("Invalid period: %s. Allowed values: past_24_hours, past_week, past_month, past_3_months", reqBody.Period), http.StatusBadRequest)
+			return
+		}
+
 		repos, err = parser.GetTrendingReposFromOssInsight(reqBody.MaxRepos, reqBody.Period, reqBody.Language)
 	case "github":
-		repos, err = parser.GetTrendingRepos(reqBody.MaxRepos, reqBody.Since, reqBody.SpokenLanguageCode)
-	default:
+		// Validate Since
+		validSince := map[string]bool{
+			"daily":   true,
+			"weekly":  true,
+			"monthly": true,
+		}
+		if reqBody.Since != "" && !validSince[reqBody.Since] {
+			http.Error(w, fmt.Sprintf("Invalid since: %s. Allowed values: daily, weekly, monthly", reqBody.Since), http.StatusBadRequest)
+			return
+		}
+
 		repos, err = parser.GetTrendingRepos(reqBody.MaxRepos, reqBody.Since, reqBody.SpokenLanguageCode)
 	}
 
