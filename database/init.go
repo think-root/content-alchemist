@@ -5,9 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var DBThinkRoot *sql.DB
@@ -22,7 +25,77 @@ type GithubRepositories struct {
 }
 
 func (GithubRepositories) TableName() string {
-	return "alchemist_github_repositories"
+	return "github_repositories"
+}
+
+func init() {
+	var err error
+
+	// Ensure data directory exists
+	dbPath := config.SQLITE_DB_PATH
+	dbDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		log.Fatalf("Error creating database directory: %v", err)
+	}
+
+	// Connect to SQLite
+	DBThinkRoot, err = sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatalf("Error opening SQLite connection: %v", err)
+	}
+
+	// Enable WAL mode
+	if _, err := DBThinkRoot.Exec("PRAGMA journal_mode=WAL;"); err != nil {
+		log.Fatalf("Error enabling WAL mode: %v", err)
+	}
+
+	if err := createTableIfNotExists(); err != nil {
+		log.Fatalf("Error creating table: %v", err)
+	}
+
+	// Check migration status
+	var userVersion int
+	if err := DBThinkRoot.QueryRow("PRAGMA user_version;").Scan(&userVersion); err != nil {
+		log.Fatalf("Error checking user_version: %v", err)
+	}
+
+	if userVersion == 0 {
+		log.Println("Starting migration from PostgreSQL...")
+		if err := migrateFromPostgres(); err != nil {
+			log.Printf("Migration failed: %v", err)
+			// Decide if we want to fail hard or just log. Failing hard is probably safer for data consistency.
+			// However, if Postgres connects fails (e.g. credentials missing), maybe we should just continue?
+			// The user said "migrate automatically", implying if it's possible. All existing logic relies on the data.
+			// Let's log error but allow startup, assuming empty DB is better than crash if PG is down.
+			// BUT, the requirements say "migrate... then lift version". So if migration fails, we don't lift version.
+		} else {
+			log.Println("Migration successful.")
+			if _, err := DBThinkRoot.Exec("PRAGMA user_version = 1;"); err != nil {
+				log.Printf("Error updating user_version: %v", err)
+			}
+		}
+	} else {
+		log.Println("Database already migrated (version >= 1).")
+	}
+
+	log.Printf("Successfully connected to SQLite database: %s", config.SQLITE_DB_PATH)
+}
+
+func createTableIfNotExists() error {
+	createTableQuery := `
+	CREATE TABLE IF NOT EXISTS github_repositories (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		url TEXT NOT NULL UNIQUE,
+		text TEXT NOT NULL,
+		posted INTEGER NOT NULL DEFAULT 0,
+		date_added DATETIME,
+		date_posted DATETIME
+	);
+	CREATE INDEX IF NOT EXISTS idx_github_repositories_url ON github_repositories(url);
+	CREATE INDEX IF NOT EXISTS idx_github_repositories_posted ON github_repositories(posted);
+	`
+	_, err := DBThinkRoot.Exec(createTableQuery)
+	return err
 }
 
 func buildPostgreSQLDSN(host, port, user, password, dbname string) string {
@@ -30,162 +103,13 @@ func buildPostgreSQLDSN(host, port, user, password, dbname string) string {
 		host, port, user, password, dbname)
 }
 
-func createDatabaseIfNotExists() error {
-	// Connect to PostgreSQL without specifying a database
-	defaultDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		config.POSTGRES_HOST, config.POSTGRES_PORT, config.POSTGRES_USER, config.POSTGRES_PASSWORD, config.POSTGRES_DB)
-	
-	db, err := sql.Open("postgres", defaultDSN)
-	if err != nil {
-		return fmt.Errorf("failed to connect to PostgreSQL: %v", err)
-	}
-	defer db.Close()
-
-	// Check if database exists
-	var exists bool
-	query := "SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = $1)"
-	err = db.QueryRow(query, config.POSTGRES_DB).Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("failed to check if database exists: %v", err)
+func migrateFromPostgres() error {
+	// Check if Postgres config is available
+	if config.POSTGRES_HOST == "" || config.POSTGRES_DB == "" {
+		log.Println("PostgreSQL configuration missing, skipping migration.")
+		return fmt.Errorf("postgres config missing")
 	}
 
-	// Create database if it doesn't exist
-	if !exists {
-		createQuery := fmt.Sprintf("CREATE DATABASE \"%s\" WITH ENCODING='UTF8' LC_COLLATE='en_US.UTF-8' LC_CTYPE='en_US.UTF-8'", config.POSTGRES_DB)
-		_, err = db.Exec(createQuery)
-		if err != nil {
-			return fmt.Errorf("failed to create database: %v", err)
-		}
-		log.Printf("Created database: %s", config.POSTGRES_DB)
-	} else {
-		log.Printf("Database %s already exists", config.POSTGRES_DB)
-	}
-
-	return nil
-}
-
-func createTableIfNotExists() error {
-	createTableQuery := `
-	CREATE TABLE IF NOT EXISTS alchemist_github_repositories (
-		id BIGSERIAL PRIMARY KEY,
-		url TEXT NOT NULL UNIQUE,
-		text TEXT NOT NULL,
-		posted INTEGER NOT NULL DEFAULT 0,
-		date_added TIMESTAMP,
-		date_posted TIMESTAMP
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_alchemist_github_repositories_url ON alchemist_github_repositories(url);
-	CREATE INDEX IF NOT EXISTS idx_alchemist_github_repositories_posted ON alchemist_github_repositories(posted);
-	CREATE INDEX IF NOT EXISTS idx_alchemist_github_repositories_date_added ON alchemist_github_repositories(date_added);
-	CREATE INDEX IF NOT EXISTS idx_alchemist_github_repositories_date_posted ON alchemist_github_repositories(date_posted);
-	`
-
-	_, err := DBThinkRoot.Exec(createTableQuery)
-	if err != nil {
-		return fmt.Errorf("failed to create table: %v", err)
-	}
-
-	log.Println("Table alchemist_github_repositories is ready")
-	return nil
-}
-
-func addUniqueConstraintToURL() error {
-	var constraintExists bool
-	checkQuery := `
-		SELECT EXISTS (
-			SELECT 1 FROM information_schema.table_constraints
-			WHERE constraint_name = 'alchemist_github_repositories_url_key'
-			AND table_name = 'alchemist_github_repositories'
-		)
-	`
-	
-	err := DBThinkRoot.QueryRow(checkQuery).Scan(&constraintExists)
-	if err != nil {
-		return fmt.Errorf("failed to check constraint existence: %v", err)
-	}
-	
-	if constraintExists {
-		log.Println("Unique constraint on URL already exists")
-		return nil
-	}
-	
-	removeDuplicatesQuery := `
-		DELETE FROM alchemist_github_repositories
-		WHERE id NOT IN (
-			SELECT MIN(id)
-			FROM alchemist_github_repositories
-			GROUP BY url
-		)
-	`
-	
-	result, err := DBThinkRoot.Exec(removeDuplicatesQuery)
-	if err != nil {
-		return fmt.Errorf("failed to remove duplicates: %v", err)
-	}
-	
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected > 0 {
-		log.Printf("Removed %d duplicate repositories", rowsAffected)
-	}
-	
-	// Add unique constraint
-	addConstraintQuery := `
-		ALTER TABLE alchemist_github_repositories
-		ADD CONSTRAINT alchemist_github_repositories_url_key UNIQUE (url)
-	`
-	
-	_, err = DBThinkRoot.Exec(addConstraintQuery)
-	if err != nil {
-		return fmt.Errorf("failed to add unique constraint: %v", err)
-	}
-	
-	log.Println("Added unique constraint to URL column")
-	return nil
-}
-
-func synchronizeSequence() error {
-	// Get the maximum ID from the table
-	var maxID int64
-	err := DBThinkRoot.QueryRow("SELECT COALESCE(MAX(id), 0) FROM alchemist_github_repositories").Scan(&maxID)
-	if err != nil {
-		return fmt.Errorf("failed to get max ID: %v", err)
-	}
-
-	// If there are records, synchronize the sequence
-	if maxID > 0 {
-		var currentSeqVal int64
-		err = DBThinkRoot.QueryRow("SELECT last_value FROM alchemist_github_repositories_id_seq").Scan(&currentSeqVal)
-		if err != nil {
-			return fmt.Errorf("failed to get sequence value: %v", err)
-		}
-
-		// Only update if sequence is behind
-		if currentSeqVal < maxID {
-			_, err = DBThinkRoot.Exec("SELECT setval('alchemist_github_repositories_id_seq', $1)", maxID)
-			if err != nil {
-				return fmt.Errorf("failed to set sequence value: %v", err)
-			}
-			log.Printf("Synchronized sequence: updated from %d to %d", currentSeqVal, maxID)
-		} else {
-			log.Printf("Sequence is already synchronized (current: %d, max_id: %d)", currentSeqVal, maxID)
-		}
-	}
-
-	return nil
-}
-
-func init() {
-	var err error
-
-	// Create database if it doesn't exist
-	err = createDatabaseIfNotExists()
-	if err != nil {
-		log.Printf("Error creating database: %v", err)
-		return
-	}
-
-	// Build PostgreSQL DSN
 	dsn := buildPostgreSQLDSN(
 		config.POSTGRES_HOST,
 		config.POSTGRES_PORT,
@@ -194,44 +118,54 @@ func init() {
 		config.POSTGRES_DB,
 	)
 
-	// Connect to the specific database
-	DBThinkRoot, err = sql.Open("postgres", dsn)
+	pgDB, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Printf("Error opening PostgreSQL connection: %v", err)
-		return
+		return fmt.Errorf("failed to open postgres connection: %v", err)
+	}
+	defer pgDB.Close()
+
+	if err := pgDB.Ping(); err != nil {
+		return fmt.Errorf("failed to connect to postgres: %v", err)
 	}
 
-	// Test the connection
-	err = DBThinkRoot.Ping()
+	rows, err := pgDB.Query("SELECT url, text, posted, date_added, date_posted FROM alchemist_github_repositories")
 	if err != nil {
-		log.Printf("Error pinging PostgreSQL database: %v", err)
-		return
+		return fmt.Errorf("failed to query postgres data: %v", err)
+	}
+	defer rows.Close()
+
+	tx, err := DBThinkRoot.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin sqlite transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("INSERT OR IGNORE INTO github_repositories (url, text, posted, date_added, date_posted) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return fmt.Errorf("failed to prepare insert statement: %v", err)
+	}
+	defer stmt.Close()
+
+	count := 0
+	for rows.Next() {
+		var url, text string
+		var posted int
+		var dateAdded, datePosted *time.Time
+
+		if err := rows.Scan(&url, &text, &posted, &dateAdded, &datePosted); err != nil {
+			return fmt.Errorf("failed to scan postgres row: %v", err)
+		}
+
+		if _, err := stmt.Exec(url, text, posted, dateAdded, datePosted); err != nil {
+			return fmt.Errorf("failed to insert row into sqlite: %v", err)
+		}
+		count++
 	}
 
-	// Configure connection pool
-	DBThinkRoot.SetMaxOpenConns(25)
-	DBThinkRoot.SetMaxIdleConns(10)
-	DBThinkRoot.SetConnMaxLifetime(time.Hour)
-	DBThinkRoot.SetConnMaxIdleTime(30 * time.Minute)
-
-	log.Printf("Successfully connected to PostgreSQL database: %s", config.POSTGRES_DB)
-
-	// Create table if it doesn't exist
-	err = createTableIfNotExists()
-	if err != nil {
-		log.Printf("Error creating table: %v", err)
-		return
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
-	// Add unique constraint to URL column for existing databases
-	err = addUniqueConstraintToURL()
-	if err != nil {
-		log.Printf("Warning: Could not add unique constraint to URL: %v", err)
-	}
-
-	// Ensure sequence is synchronized with existing data (prevents duplicate key errors after migration)
-	err = synchronizeSequence()
-	if err != nil {
-		log.Printf("Warning: Could not synchronize sequence: %v", err)
-	}
+	log.Printf("Migrated %d records from PostgreSQL.", count)
+	return nil
 }
