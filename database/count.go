@@ -16,10 +16,10 @@ func CountRepositories(posted *bool) (int, error) {
 		} else {
 			postedValue = 0
 		}
-		query = "SELECT COUNT(*) FROM alchemist_github_repositories WHERE posted = $1"
+		query = "SELECT COUNT(*) FROM github_repositories WHERE posted = ?"
 		args = []interface{}{postedValue}
 	} else {
-		query = "SELECT COUNT(*) FROM alchemist_github_repositories"
+		query = "SELECT COUNT(*) FROM github_repositories"
 		args = []interface{}{}
 	}
 
