@@ -28,11 +28,6 @@ This is a ready-made solution in the form of an API server that generates social
 
 - Go 1.23
 - SQLite
-- Multiple AI Providers:
-  - Mistral AI [API](https://docs.mistral.ai/api/)
-  - OpenAI [API](https://platform.openai.com/docs/api-reference)
-  - OpenRouter [API](https://openrouter.ai/docs)
-  - Chutes.ai [API](https://chutes.ai)
 
 ## Installation
 
@@ -40,6 +35,11 @@ This is a ready-made solution in the form of an API server that generates social
 
 - Go 1.23 or later
 - API key for at least one of the supported AI providers
+
+  - Mistral AI [API](https://docs.mistral.ai/api/)
+  - OpenAI [API](https://platform.openai.com/docs/api-reference)
+  - OpenRouter [API](https://openrouter.ai/docs)
+  - Chutes.ai [API](https://chutes.ai)
 
 ### 1. Clone the repository
 
