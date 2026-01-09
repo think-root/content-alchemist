@@ -4,7 +4,7 @@ import "fmt"
 
 func SearchPostInDB(link string) (bool, error) {
 	var count int64
-	query := "SELECT COUNT(*) FROM alchemist_github_repositories WHERE url = $1"
+	query := "SELECT COUNT(*) FROM github_repositories WHERE url = ?"
 	
 	err := DBThinkRoot.QueryRow(query, link).Scan(&count)
 	if err != nil {
