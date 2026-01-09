@@ -77,19 +77,9 @@ jobs:
             echo "Building Docker image with version $APP_VERSION"
             export APP_VERSION
 
-            # Check database container status
-            echo "Checking database container status..."
-            if docker inspect postgresql-db >/dev/null 2>&1; then
-              if docker inspect -f '{{.State.Running}}' postgresql-db | grep -q true; then
-                echo "Database container is already running, skipping..."
-              else
-                echo "Database container exists but not running, starting it..."
-                docker compose -f docker-compose.db.yml start
-              fi
-            else
-              echo "Database container doesn't exist, creating and starting..."
-              docker compose -f docker-compose.db.yml up -d --no-recreate
-            fi
+            # Ensure SQLite database directory exists on host
+            echo "Ensuring SQLite database directory exists..."
+            mkdir -p ~/sqlite_db
 
             # Always rebuild and restart application container
             echo "Stopping and removing existing application container..."
