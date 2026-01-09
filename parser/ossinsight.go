@@ -78,5 +78,9 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 		return nil, fmt.Errorf("failed to filter existing repositories: %v", err)
 	}
 
+	if len(filteredRepos) > maxRepos {
+		filteredRepos = filteredRepos[:maxRepos]
+	}
+
 	return filteredRepos, nil
 }
