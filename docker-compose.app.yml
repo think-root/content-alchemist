@@ -8,11 +8,14 @@ services:
         APP_VERSION: ${APP_VERSION}
     env_file:
       - .env
+    environment:
+      - SQLITE_DB_PATH=data/content-alchemist.db
     ports:
       - "${API_PORT:-9111}:${API_PORT:-9111}"
+    volumes:
+      - ~/sqlite_db:/app/data
     networks:
-      think-root-network:
-        mac_address: 02:42:ac:13:00:09
+      - think-root-network
 
 networks:
   think-root-network:
