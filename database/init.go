@@ -31,20 +31,17 @@ func (GithubRepositories) TableName() string {
 func init() {
 	var err error
 
-	// Ensure data directory exists
 	dbPath := config.SQLITE_DB_PATH
 	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
 		log.Fatalf("Error creating database directory: %v", err)
 	}
 
-	// Connect to SQLite
 	DBThinkRoot, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatalf("Error opening SQLite connection: %v", err)
 	}
 
-	// Enable WAL mode
 	if _, err := DBThinkRoot.Exec("PRAGMA journal_mode=WAL;"); err != nil {
 		log.Fatalf("Error enabling WAL mode: %v", err)
 	}
@@ -53,7 +50,6 @@ func init() {
 		log.Fatalf("Error creating table: %v", err)
 	}
 
-	// Check migration status
 	var userVersion int
 	if err := DBThinkRoot.QueryRow("PRAGMA user_version;").Scan(&userVersion); err != nil {
 		log.Fatalf("Error checking user_version: %v", err)
@@ -63,11 +59,6 @@ func init() {
 		log.Println("Starting migration from PostgreSQL...")
 		if err := migrateFromPostgres(); err != nil {
 			log.Printf("Migration failed: %v", err)
-			// Decide if we want to fail hard or just log. Failing hard is probably safer for data consistency.
-			// However, if Postgres connects fails (e.g. credentials missing), maybe we should just continue?
-			// The user said "migrate automatically", implying if it's possible. All existing logic relies on the data.
-			// Let's log error but allow startup, assuming empty DB is better than crash if PG is down.
-			// BUT, the requirements say "migrate... then lift version". So if migration fails, we don't lift version.
 		} else {
 			log.Println("Migration successful.")
 			if _, err := DBThinkRoot.Exec("PRAGMA user_version = 1;"); err != nil {
@@ -104,7 +95,6 @@ func buildPostgreSQLDSN(host, port, user, password, dbname string) string {
 }
 
 func migrateFromPostgres() error {
-	// Check if Postgres config is available
 	if config.POSTGRES_HOST == "" || config.POSTGRES_DB == "" {
 		log.Println("PostgreSQL configuration missing, skipping migration.")
 		return fmt.Errorf("postgres config missing")
