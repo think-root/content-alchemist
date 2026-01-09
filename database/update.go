@@ -8,7 +8,7 @@ import (
 func UpdatePostedStatusByURL(url string, posted bool) error {
 	// First check if repository exists
 	var exists bool
-	checkQuery := "SELECT EXISTS(SELECT 1 FROM alchemist_github_repositories WHERE url = $1)"
+	checkQuery := "SELECT EXISTS(SELECT 1 FROM github_repositories WHERE url = ?)"
 	err := DBThinkRoot.QueryRow(checkQuery, url).Scan(&exists)
 	if err != nil {
 		return fmt.Errorf("error checking repository existence: %v", err)
@@ -31,7 +31,7 @@ func UpdatePostedStatusByURL(url string, posted bool) error {
 		datePosted = nil
 	}
 
-	updateQuery := "UPDATE alchemist_github_repositories SET posted = $1, date_posted = $2 WHERE url = $3"
+	updateQuery := "UPDATE github_repositories SET posted = ?, date_posted = ? WHERE url = ?"
 	_, err = DBThinkRoot.Exec(updateQuery, postedValue, datePosted, url)
 	if err != nil {
 		return fmt.Errorf("error updating repository: %v", err)
@@ -46,16 +46,16 @@ func UpdateRepositoryTextByIDOrURL(identifier, text string, isID bool) (*GithubR
 	
 	if isID {
 		query = `
-			UPDATE alchemist_github_repositories
-			SET text = $1
-			WHERE id = $2
+			UPDATE github_repositories
+			SET text = ?
+			WHERE id = ?
 			RETURNING id, url, text, posted, date_added, date_posted
 		`
 	} else {
 		query = `
-			UPDATE alchemist_github_repositories
-			SET text = $1
-			WHERE url = $2
+			UPDATE github_repositories
+			SET text = ?
+			WHERE url = ?
 			RETURNING id, url, text, posted, date_added, date_posted
 		`
 	}
@@ -87,9 +87,9 @@ func DeleteRepositoryByIDOrURL(identifier string, isID bool) error {
 	var query string
 	
 	if isID {
-		query = "DELETE FROM alchemist_github_repositories WHERE id = $1"
+		query = "DELETE FROM github_repositories WHERE id = ?"
 	} else {
-		query = "DELETE FROM alchemist_github_repositories WHERE url = $1"
+		query = "DELETE FROM github_repositories WHERE url = ?"
 	}
 	
 	result, err := DBThinkRoot.Exec(query, identifier)
