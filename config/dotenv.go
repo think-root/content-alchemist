@@ -30,6 +30,14 @@ func Env(name string) string {
 	return os.Getenv(name)
 }
 
+func EnvWithDefault(name, defaultVal string) string {
+	val := Env(name)
+	if val == "" {
+		return defaultVal
+	}
+	return val
+}
+
 func EnvAsInt(name string, defaultVal int) int {
 	valueStr := Env(name)
 	if valueStr == "" {
