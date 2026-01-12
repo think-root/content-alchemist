@@ -5,13 +5,23 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 )
+
+func isEnglishOnly(text string) bool {
+	if text == "" {
+		return true
+	}
+	asciiOnly := regexp.MustCompile(`^[\x20-\x7E]*$`)
+	return asciiOnly.MatchString(text)
+}
 
 type OssInsightResponse struct {
 	Data struct {
 		Rows []struct {
 			RepoName        string `json:"repo_name"`
 			PrimaryLanguage string `json:"primary_language"`
+			Description     string `json:"description"`
 			Stars           string `json:"stars"`
 			Forks           string `json:"forks"`
 		} `json:"rows"`
@@ -64,6 +74,10 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 
 	var allRepos []Repository
 	for _, row := range apiRes.Data.Rows {
+		if !isEnglishOnly(row.Description) {
+			continue
+		}
+
 		repoURL := "https://github.com/" + row.RepoName
 		allRepos = append(allRepos, Repository{
 			URL:      repoURL,
