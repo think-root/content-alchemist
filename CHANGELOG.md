@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/think-root/content-alchemist/compare/v3.0.0...v3.1.0) (2026-01-12)
+
+
+### Features
+
+* **parser:** add English-only filter for repo descriptions ([a3aeb8a](https://github.com/think-root/content-alchemist/commit/a3aeb8a882f454721b7803921c6fe910955343ea))
+
 # [3.0.0](https://github.com/think-root/content-alchemist/compare/v2.2.0...v3.0.0) (2026-01-09)
 
 
