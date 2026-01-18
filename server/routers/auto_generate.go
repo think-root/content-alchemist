@@ -121,9 +121,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		repoReadme, err := parser.GetRepoReadme(repo.URL)
 		if err != nil {
 			log.Printf("Error fetching repo readme for URL %s: %v", repo.URL, err)
-			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
-			response.ErrorMessage = "Failed to fetch repository README"
 			continue
 		}
 
@@ -219,26 +217,32 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, llmConfig)
 		if err != nil {
 			log.Printf("Error processing text with LLM for URL %s: %v", repo.URL, err)
-			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
-			response.ErrorMessage = "Failed to process text with language model"
 			continue
 		}
 
 		cleanedText := server.CleanMultilingualText(processedText)
 		if err := database.AddRepositoryToDB(repo.URL, cleanedText); err != nil {
 			log.Printf("Error adding repository to database for URL %s: %v", repo.URL, err)
-			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, repo.URL)
-			response.ErrorMessage = "Failed to add repository to database"
 			continue
 		}
 
 		response.Added = append(response.Added, repo.URL)
 	}
 
+	if len(response.Added) > 0 && len(response.DontAdded) > 0 {
+		response.Status = "partial"
+		response.ErrorMessage = fmt.Sprintf("%d repositories failed to process", len(response.DontAdded))
+	} else if len(response.DontAdded) > 0 && len(response.Added) == 0 {
+		response.Status = "error"
+		response.ErrorMessage = "All repositories failed to process"
+	} else {
+		response.Status = "ok"
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if response.Status == "error" {
+	if response.Status == "error" && len(response.Added) == 0 {
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		w.WriteHeader(http.StatusOK)

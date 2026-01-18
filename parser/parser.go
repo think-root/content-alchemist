@@ -45,7 +45,7 @@ func doRequestWithRetry(req *http.Request, maxRetries int) (*http.Response, erro
 		}
 
 		if i < maxRetries-1 {
-			backoff := time.Duration(i+1) * 2 * time.Second
+			backoff := time.Duration(3*(1<<i)) * time.Second
 			log.Printf("Request failed (attempt %d/%d), retrying in %v: %v", i+1, maxRetries, backoff, err)
 			time.Sleep(backoff)
 
