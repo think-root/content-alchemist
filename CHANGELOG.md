@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/think-root/content-alchemist/compare/v3.1.0...v3.2.0) (2026-01-18)
+
+
+### Features
+
+* Implement granular response statuses for auto-generation and exponential backoff for parser retries. ([deb82c0](https://github.com/think-root/content-alchemist/commit/deb82c0b14aefb6797bb0757805306ff54175c69))
+
 # [3.1.0](https://github.com/think-root/content-alchemist/compare/v3.0.0...v3.1.0) (2026-01-12)
 
 
