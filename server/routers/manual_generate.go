@@ -6,6 +6,7 @@ import (
 	"content-alchemist/parser"
 	"content-alchemist/server"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -82,7 +83,13 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error fetching repo readme for URL %s: %v", url, err)
 			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, url)
-			response.ErrorMessage = "Failed to fetch repository README"
+
+			var readmeNotFoundErr *parser.ReadmeNotFoundError
+			if errors.As(err, &readmeNotFoundErr) {
+				response.ErrorMessage = fmt.Sprintf("Repository %s does not have a README file", url)
+			} else {
+				response.ErrorMessage = fmt.Sprintf("Failed to fetch repository README: %v", err)
+			}
 			continue
 		}
 
