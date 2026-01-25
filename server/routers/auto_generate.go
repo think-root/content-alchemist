@@ -6,6 +6,7 @@ import (
 	"content-alchemist/parser"
 	"content-alchemist/server"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -120,6 +121,14 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 
 		repoReadme, err := parser.GetRepoReadme(repo.URL)
 		if err != nil {
+			// Check if it's a "README not found" error - skip silently
+			var readmeNotFoundErr *parser.ReadmeNotFoundError
+			if errors.As(err, &readmeNotFoundErr) {
+				log.Printf("Skipping repository without README: %s", repo.URL)
+				continue
+			}
+
+			// For all other errors (rate limits, server errors, etc.), log and track
 			log.Printf("Error fetching repo readme for URL %s: %v", repo.URL, err)
 			response.DontAdded = append(response.DontAdded, repo.URL)
 			continue
