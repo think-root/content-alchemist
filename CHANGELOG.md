@@ -1,3 +1,18 @@
+# [3.4.0](https://github.com/think-root/content-alchemist/compare/v3.3.0...v3.4.0) (2026-01-25)
+
+
+### Bug Fixes
+
+* **parser:** hardcode API limit to 100 regardless of maxRepos param ([1f043c1](https://github.com/think-root/content-alchemist/commit/1f043c15546f43ed5bb39d94cad8ded7188fb0a6))
+* **router:** improve error handling for manual generation endpoint ([1addf3c](https://github.com/think-root/content-alchemist/commit/1addf3cbdd11826af9844341567cba47b061bde0))
+
+
+### Features
+
+* **config:** add GitHub token environment variable ([440a112](https://github.com/think-root/content-alchemist/commit/440a112871e2da497b71e9f0789e695bbd1bada6))
+* **parser:** support GitHub token authentication for API requests ([2f3d437](https://github.com/think-root/content-alchemist/commit/2f3d43740fc0c2f33a8728ed3de1cbc7b6e04395))
+* **router:** limit auto-generation to maxRepos parameter ([5bc0e39](https://github.com/think-root/content-alchemist/commit/5bc0e39dc95061c63f43d67b7af53e3bb429eae2))
+
 # [3.3.0](https://github.com/think-root/content-alchemist/compare/v3.2.0...v3.3.0) (2026-01-25)
 
 
