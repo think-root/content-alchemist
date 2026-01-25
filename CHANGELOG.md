@@ -1,3 +1,12 @@
+# [3.3.0](https://github.com/think-root/content-alchemist/compare/v3.2.0...v3.3.0) (2026-01-25)
+
+
+### Features
+
+* **parser:** improve README fetching error handling with custom error types ([9daee0c](https://github.com/think-root/content-alchemist/commit/9daee0cbc198bffea4b592c0fd12cdcb7d0dc25b))
+* **router:** enhance error messages for missing README ([8325d64](https://github.com/think-root/content-alchemist/commit/8325d643c0ceec79f368d9debd178a81c3513b2e))
+* **router:** handle README not found errors gracefully in auto-generation ([26380a7](https://github.com/think-root/content-alchemist/commit/26380a7534f61bb6fadae7f7e83ca4fbb332793f))
+
 # [3.2.0](https://github.com/think-root/content-alchemist/compare/v3.1.0...v3.2.0) (2026-01-18)
 
 
