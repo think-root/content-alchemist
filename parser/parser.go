@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"content-alchemist/config"
 	"content-alchemist/database"
 	"encoding/base64"
 	"encoding/json"
@@ -127,9 +128,6 @@ func GetTrendingRepos(maxRepos int, since, spokenLanguageCode string) ([]Reposit
 		return nil, fmt.Errorf("failed to filter existing repositories: %v", err)
 	}
 
-	if len(filteredRepos) > maxRepos {
-		filteredRepos = filteredRepos[:maxRepos]
-	}
 
 	return filteredRepos, nil
 }
@@ -182,6 +180,11 @@ func GetRepoReadme(repo string) (string, error) {
 	// For GitHub API, we use slightly different headers
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	// Add GitHub token for authentication if available
+	if config.GITHUB_TOKEN != "" {
+		req.Header.Set("Authorization", "token "+config.GITHUB_TOKEN)
+	}
 
 	resp, err := doRequestWithRetry(req, 3)
 	if err != nil {
