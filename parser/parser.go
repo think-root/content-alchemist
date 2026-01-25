@@ -20,6 +20,26 @@ var httpClient = &http.Client{
 	Timeout: 30 * time.Second,
 }
 
+// ReadmeNotFoundError indicates that the repository doesn't have a README file
+type ReadmeNotFoundError struct {
+	Repo string
+}
+
+func (e *ReadmeNotFoundError) Error() string {
+	return fmt.Sprintf("repository %s does not have a README file", e.Repo)
+}
+
+// ReadmeHTTPError indicates an HTTP error occurred while fetching the README
+type ReadmeHTTPError struct {
+	Repo       string
+	StatusCode int
+	Status     string
+}
+
+func (e *ReadmeHTTPError) Error() string {
+	return fmt.Sprintf("HTTP error fetching README for %s: %d %s", e.Repo, e.StatusCode, e.Status)
+}
+
 // browserHeaders adds common browser headers to avoid being blocked by GitHub
 func setBrowserHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
@@ -37,6 +57,11 @@ func doRequestWithRetry(req *http.Request, maxRetries int) (*http.Response, erro
 	for i := 0; i < maxRetries; i++ {
 		res, err = httpClient.Do(req)
 		if err == nil && res.StatusCode == http.StatusOK {
+			return res, nil
+		}
+
+		// Don't retry on 404 - the resource doesn't exist
+		if err == nil && res.StatusCode == http.StatusNotFound {
 			return res, nil
 		}
 
@@ -164,8 +189,18 @@ func GetRepoReadme(repo string) (string, error) {
 	}
 	defer resp.Body.Close()
 
+	// Return specific error for 404
+	if resp.StatusCode == http.StatusNotFound {
+		return "", &ReadmeNotFoundError{Repo: repo}
+	}
+
+	// Return specific error for other non-200 status codes
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("error: received status code %d", resp.StatusCode)
+		return "", &ReadmeHTTPError{
+			Repo:       repo,
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+		}
 	}
 
 	body, err := io.ReadAll(resp.Body)
