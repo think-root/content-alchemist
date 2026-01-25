@@ -1,4 +1,4 @@
-name: Release content-alchemist
+name: Release 📜
 
 on:
   workflow_dispatch:

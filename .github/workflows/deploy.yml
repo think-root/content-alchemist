@@ -1,4 +1,4 @@
-name: Deploy content-alchemist
+name: Deploy 🚀
 
 on:
   workflow_dispatch:
