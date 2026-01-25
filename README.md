@@ -87,6 +87,9 @@ OPENROUTER_TOKEN=<openrouter api key>
 
 # Chutes.ai Provider Settings (optional)
 CHUTES_API_TOKEN=<chutes api key>
+
+# GitHub API (optional)
+GITHUB_TOKEN=<github api token>
 ```
 
 ### 5. Run the application
