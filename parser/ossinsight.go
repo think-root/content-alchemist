@@ -45,7 +45,7 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 	q := u.Query()
 	q.Set("period", period)
 	q.Set("language", language)
-	q.Set("limit", fmt.Sprintf("%d", maxRepos))
+	q.Set("limit", "100")
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequest("GET", u.String(), nil)
@@ -91,10 +91,5 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter existing repositories: %v", err)
 	}
-
-	if len(filteredRepos) > maxRepos {
-		filteredRepos = filteredRepos[:maxRepos]
-	}
-
-	return filteredRepos, nil
+		return filteredRepos, nil
 }
