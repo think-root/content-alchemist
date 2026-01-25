@@ -6,7 +6,6 @@ import (
 	"content-alchemist/parser"
 	"content-alchemist/server"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -81,15 +80,7 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		repoReadme, err := parser.GetRepoReadme(url)
 		if err != nil {
 			log.Printf("Error fetching repo readme for URL %s: %v", url, err)
-			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, url)
-
-			var readmeNotFoundErr *parser.ReadmeNotFoundError
-			if errors.As(err, &readmeNotFoundErr) {
-				response.ErrorMessage = fmt.Sprintf("Repository %s does not have a README file", url)
-			} else {
-				response.ErrorMessage = fmt.Sprintf("Failed to fetch repository README: %v", err)
-			}
 			continue
 		}
 
@@ -185,30 +176,32 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, llmConfig)
 		if err != nil {
 			log.Printf("Error processing text with LLM for URL %s: %v", url, err)
-			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, url)
-			response.ErrorMessage = "Failed to process text with language model"
 			continue
 		}
 
 		cleanedText := server.CleanMultilingualText(processedText)
 		if err := database.AddRepositoryToDB(url, cleanedText); err != nil {
 			log.Printf("Error adding repository to database for URL %s: %v", url, err)
-			response.Status = "error"
 			response.DontAdded = append(response.DontAdded, url)
-			response.ErrorMessage = "Failed to add repository to database"
 			continue
 		}
 
 		response.Added = append(response.Added, url)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if response.Status == "error" {
-		w.WriteHeader(http.StatusInternalServerError)
+	if len(response.Added) > 0 && len(response.DontAdded) > 0 {
+		response.Status = "partial"
+		response.ErrorMessage = fmt.Sprintf("%d repositories failed to process", len(response.DontAdded))
+	} else if len(response.DontAdded) > 0 && len(response.Added) == 0 {
+		response.Status = "error"
+		response.ErrorMessage = "All repositories failed to process"
 	} else {
-		w.WriteHeader(http.StatusOK)
+		response.Status = "ok"
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding response: %v", err)
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
