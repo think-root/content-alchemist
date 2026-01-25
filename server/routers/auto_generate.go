@@ -116,7 +116,13 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	successCount := 0
+
 	for _, repo := range repos {
+		if successCount >= reqBody.MaxRepos {
+			break
+		}
+
 		log.Printf("Processing repository: %s", repo.URL)
 
 		repoReadme, err := parser.GetRepoReadme(repo.URL)
@@ -238,6 +244,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.Added = append(response.Added, repo.URL)
+		successCount++
 	}
 
 	if len(response.Added) > 0 && len(response.DontAdded) > 0 {
@@ -251,11 +258,7 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if response.Status == "error" && len(response.Added) == 0 {
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(http.StatusOK)
-	}
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding response: %v", err)
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
