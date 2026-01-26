@@ -117,8 +117,32 @@ If you don't provide a `messages` array, the server creates one with default mul
 - 400: Invalid request
 - 401: Unauthorized
 
-**Response Example:**
+**Response Fields:**
 
+| Field            | Type                    | Description                                                                                       |
+| ---------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
+| `status`         | string                  | Response status: `ok` (all succeeded), `partial` (some failed), `error` (all failed)             |
+| `added`          | array[string]           | URLs of repositories successfully added to the database                                           |
+| `dont_added`     | array[string]           | URLs of repositories that failed to process                                                       |
+| `error_message`  | string (optional)       | General error message when failures occur                                                         |
+| `error_details`  | object (optional)       | Detailed error information for each failed repository (URL → ErrorDetail mapping)                 |
+
+**ErrorDetail Object Structure:**
+
+| Field     | Type   | Description                                                                                    |
+| --------- | ------ | ---------------------------------------------------------------------------------------------- |
+| `type`    | string | Error type: `already_exists`, `no_readme`, or `processing_error`                               |
+| `message` | string | Human-readable error message describing what went wrong                                        |
+
+**Error Types:**
+
+- `already_exists`: Repository already exists in the database
+- `no_readme`: README file not found in the repository
+- `processing_error`: LLM processing or database insertion failed
+
+**Response Examples:**
+
+Success:
 ```json
 {
   "status": "ok",
@@ -126,6 +150,58 @@ If you don't provide a `messages` array, the server creates one with default mul
   "dont_added": []
 }
 ```
+
+Single error with details:
+```json
+{
+  "status": "error",
+  "added": [],
+  "dont_added": ["https://github.com/example/repo"],
+  "error_message": "All repositories failed to process",
+  "error_details": {
+    "https://github.com/example/repo": {
+      "type": "already_exists",
+      "message": "Repository already exists in database"
+    }
+  }
+}
+```
+
+Multiple errors with different types:
+```json
+{
+  "status": "partial",
+  "added": ["https://github.com/example/success"],
+  "dont_added": [
+    "https://github.com/example/existing",
+    "https://github.com/example/no-docs",
+    "https://github.com/example/failed"
+  ],
+  "error_message": "3 repositories failed to process",
+  "error_details": {
+    "https://github.com/example/existing": {
+      "type": "already_exists",
+      "message": "Repository already exists in database"
+    },
+    "https://github.com/example/no-docs": {
+      "type": "no_readme",
+      "message": "README file not found in repository"
+    },
+    "https://github.com/example/failed": {
+      "type": "processing_error",
+      "message": "LLM processing failed"
+    }
+  }
+}
+```
+
+**Migration Notes:**
+
+The `error_details` field is backward compatible:
+- Existing clients that don't expect this field will continue to work without changes
+- The field is optional (`omitempty`) and only present when errors occur
+- All existing response fields (`status`, `added`, `dont_added`, `error_message`) remain unchanged
+- New clients can use `error_details` to provide more specific error feedback to users
 
 ### /api/auto-generate/
 
