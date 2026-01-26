@@ -1,3 +1,10 @@
+# [3.5.0](https://github.com/think-root/content-alchemist/compare/v3.4.0...v3.5.0) (2026-01-26)
+
+
+### Features
+
+* **router:** enhance manual generation with structured error details ([7390f4b](https://github.com/think-root/content-alchemist/commit/7390f4be6583874b4135b75b05c22cf3d6d20fe7))
+
 # [3.4.0](https://github.com/think-root/content-alchemist/compare/v3.3.0...v3.4.0) (2026-01-25)
 
 
