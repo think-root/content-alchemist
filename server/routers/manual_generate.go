@@ -13,6 +13,12 @@ import (
 	"strings"
 )
 
+const (
+	ErrorTypeAlreadyExists   = "already_exists"
+	ErrorTypeNoReadme        = "no_readme"
+	ErrorTypeProcessingError = "processing_error"
+)
+
 type manualGenerateRequest struct {
 	URL               string         `json:"url"`
 	LLMProvider       string         `json:"llm_provider,omitempty"`
@@ -21,11 +27,17 @@ type manualGenerateRequest struct {
 	LLMOutputLanguage string         `json:"llm_output_language,omitempty"`
 }
 
+type ErrorDetail struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
+
 type manualGenerateResponse struct {
-	Status       string   `json:"status"`
-	Added        []string `json:"added"`
-	DontAdded    []string `json:"dont_added"`
-	ErrorMessage string   `json:"error_message,omitempty"`
+	Status       string                 `json:"status"`
+	Added        []string               `json:"added"`
+	DontAdded    []string               `json:"dont_added"`
+	ErrorMessage string                 `json:"error_message,omitempty"`
+	ErrorDetails map[string]ErrorDetail `json:"error_details,omitempty"`
 }
 
 func ManualGenerate(w http.ResponseWriter, r *http.Request) {
@@ -47,9 +59,10 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 	urls := strings.Fields(reqBody.URL)
 	response := manualGenerateResponse{
-		Status:    "ok",
-		Added:     []string{},
-		DontAdded: []string{},
+		Status:       "ok",
+		Added:        []string{},
+		DontAdded:    []string{},
+		ErrorDetails: make(map[string]ErrorDetail),
 	}
 
 	filteredURLs, err := parser.FilterExistingURLs(urls)
@@ -61,8 +74,12 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 	for _, url := range urls {
 		if !slices.Contains(filteredURLs, url) {
-			log.Printf("Repository already exists in DB: %s", url)
+			log.Printf("Repository already exists in DB: %s (error type: %s)", url, ErrorTypeAlreadyExists)
 			response.DontAdded = append(response.DontAdded, url)
+			response.ErrorDetails[url] = ErrorDetail{
+				Type:    ErrorTypeAlreadyExists,
+				Message: "Repository already exists in database",
+			}
 		}
 	}
 
@@ -79,8 +96,12 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 		repoReadme, err := parser.GetRepoReadme(url)
 		if err != nil {
-			log.Printf("Error fetching repo readme for URL %s: %v", url, err)
+			log.Printf("Error fetching repo readme for URL %s (error type: %s): %v", url, ErrorTypeNoReadme, err)
 			response.DontAdded = append(response.DontAdded, url)
+			response.ErrorDetails[url] = ErrorDetail{
+				Type:    ErrorTypeNoReadme,
+				Message: "README file not found in repository",
+			}
 			continue
 		}
 
@@ -175,15 +196,23 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 		processedText, err := llm.ProcessWithProvider(textToProcess, reqBody.LLMProvider, llmConfig)
 		if err != nil {
-			log.Printf("Error processing text with LLM for URL %s: %v", url, err)
+			log.Printf("Error processing text with LLM for URL %s (error type: %s): %v", url, ErrorTypeProcessingError, err)
 			response.DontAdded = append(response.DontAdded, url)
+			response.ErrorDetails[url] = ErrorDetail{
+				Type:    ErrorTypeProcessingError,
+				Message: "LLM processing failed",
+			}
 			continue
 		}
 
 		cleanedText := server.CleanMultilingualText(processedText)
 		if err := database.AddRepositoryToDB(url, cleanedText); err != nil {
-			log.Printf("Error adding repository to database for URL %s: %v", url, err)
+			log.Printf("Error adding repository to database for URL %s (error type: %s): %v", url, ErrorTypeProcessingError, err)
 			response.DontAdded = append(response.DontAdded, url)
+			response.ErrorDetails[url] = ErrorDetail{
+				Type:    ErrorTypeProcessingError,
+				Message: "Database insertion failed",
+			}
 			continue
 		}
 
