@@ -1,0 +1,10 @@
+.git
+.github
+.env
+.env.*
+.air.toml
+data
+tmp
+node_modules
+coverage
+*.log

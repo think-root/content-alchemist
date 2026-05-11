@@ -11,9 +11,15 @@ services:
     environment:
       - SQLITE_DB_PATH=data/content-alchemist.db
     ports:
-      - "${API_PORT:-9111}:${API_PORT:-9111}"
+      - "${API_PORT:-9111}:${SERVER_PORT:-9111}"
     volumes:
       - ~/sqlite_db:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- \"http://127.0.0.1:$${SERVER_PORT:-9111}/healthz\" >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - think-root-network
 

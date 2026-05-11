@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -13,7 +14,13 @@ var LoadEnvFile = func(envPath string) error {
 	return godotenv.Load(envPath)
 }
 
+var loadEnvOnce sync.Once
+
 func Env(name string) string {
+	if value, ok := os.LookupEnv(name); ok {
+		return value
+	}
+
 	var envPath string
 	if testing.Testing() {
 		envPath = "../.env"
@@ -21,12 +28,15 @@ func Env(name string) string {
 		envPath = ".env"
 	}
 
-	err := LoadEnvFile(envPath)
-	if err != nil {
-		if !testing.Testing() {
-			log.Printf("Error loading .env file: %s", err)
+	loadEnvOnce.Do(func() {
+		err := LoadEnvFile(envPath)
+		if err != nil {
+			if !testing.Testing() && !os.IsNotExist(err) {
+				log.Printf("Error loading .env file: %s", err)
+			}
 		}
-	}
+	})
+
 	return os.Getenv(name)
 }
 

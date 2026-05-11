@@ -82,14 +82,38 @@ jobs:
             echo "Ensuring SQLite database directory exists..."
             mkdir -p ~/sqlite_db
 
-            # Always rebuild and restart application container
-            echo "Stopping and removing existing application container..."
+            echo "Building Docker image with version $APP_VERSION while the current container keeps serving traffic..."
+            previous_image_id=""
             if docker inspect content-alchemist >/dev/null 2>&1; then
-              docker compose -f docker-compose.app.yml down --rmi all
+              previous_image_id=$(docker inspect -f '{{.Image}}' content-alchemist)
+              docker tag "$previous_image_id" content-alchemist:previous || true
             fi
 
-            echo "Building and starting application..."
             docker compose -f docker-compose.app.yml build --build-arg APP_VERSION=$APP_VERSION
-            docker compose -f docker-compose.app.yml up -d --no-deps --build
+
+            echo "Recreating application container..."
+            docker compose -f docker-compose.app.yml up -d --no-deps --force-recreate
+
+            echo "Waiting for application health..."
+            for i in $(seq 1 30); do
+              health_status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' content-alchemist 2>/dev/null || true)
+              if [ "$health_status" = "healthy" ]; then
+                echo "Application is healthy."
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "Application did not become healthy. Current status: ${health_status:-unknown}"
+                docker logs --tail=120 content-alchemist || true
+
+                if [ -n "$previous_image_id" ] && docker image inspect content-alchemist:previous >/dev/null 2>&1; then
+                  echo "Rolling back to previous image..."
+                  docker tag content-alchemist:previous content-alchemist:latest
+                  docker compose -f docker-compose.app.yml up -d --no-deps --force-recreate
+                fi
+
+                exit 1
+              fi
+              sleep 2
+            done
 
             echo "Deployment complete!"
