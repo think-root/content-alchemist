@@ -1,3 +1,10 @@
+## [3.6.3](https://github.com/think-root/content-alchemist/compare/v3.6.2...v3.6.3) (2026-05-11)
+
+
+### Bug Fixes
+
+* **deploy:** reduce container restart downtime ([b3db3c3](https://github.com/think-root/content-alchemist/commit/b3db3c3c35c5f05dc29d20c0d3a032a42405a556))
+
 ## [3.6.2](https://github.com/think-root/content-alchemist/compare/v3.6.1...v3.6.2) (2026-05-11)
 
 
