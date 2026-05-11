@@ -1,3 +1,10 @@
+## [3.6.2](https://github.com/think-root/content-alchemist/compare/v3.6.1...v3.6.2) (2026-05-11)
+
+
+### Bug Fixes
+
+* **api:** fall back when repository language is missing ([c51b460](https://github.com/think-root/content-alchemist/commit/c51b4605012da284c3d656991a95522e42ce7dc0))
+
 ## [3.6.1](https://github.com/think-root/content-alchemist/compare/v3.6.0...v3.6.1) (2026-05-11)
 
 
