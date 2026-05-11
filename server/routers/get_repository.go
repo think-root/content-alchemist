@@ -65,11 +65,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 
 	// Check if text is in old format (plain text without language markers)
 	if !strings.Contains(text, "(") || !strings.Contains(text, ")") {
-		// Old format - plain text
-		if languageCode == "" {
-			return text, nil // Return as is if no language specified
-		}
-		return "", fmt.Errorf("no text available for language: %s", languageCode)
+		return text, nil
 	}
 
 	// Check if text is in single language format: (code)text
@@ -87,7 +83,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 			if textLang == languageCode {
 				return textContent, nil
 			}
-			return "", fmt.Errorf("no text available for language: %s", languageCode)
+			return textContent, nil
 		}
 	}
 
@@ -101,6 +97,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 		sections := strings.Split(content, "===")
 
 		languageTexts := make(map[string]string)
+		orderedTexts := make([]string, 0, len(sections))
 		for _, section := range sections {
 			if section == "" {
 				continue
@@ -114,31 +111,26 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 				lang := matches[1]
 				content := matches[2]
 				languageTexts[lang] = content
+				orderedTexts = append(orderedTexts, content)
 			}
 		}
 
-		if languageCode == "" {
-			// Return Ukrainian by default if available, otherwise first available
-			if ukText, exists := languageTexts["uk"]; exists {
-				return ukText, nil
-			}
-			for _, content := range languageTexts {
+		if languageCode != "" {
+			if content, exists := languageTexts[languageCode]; exists {
 				return content, nil
 			}
-			return text, nil // Fallback to original text
 		}
 
-		if content, exists := languageTexts[languageCode]; exists {
-			return content, nil
+		if ukText, exists := languageTexts["uk"]; exists {
+			return ukText, nil
 		}
-		return "", fmt.Errorf("no text available for language: %s", languageCode)
-	}
-
-	// If we can't parse the format, treat as old format
-	if languageCode == "" {
+		if len(orderedTexts) > 0 {
+			return orderedTexts[0], nil
+		}
 		return text, nil
 	}
-	return "", fmt.Errorf("no text available for language: %s", languageCode)
+
+	return text, nil
 }
 
 // processTextForLanguage processes repository text based on the requested language

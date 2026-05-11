@@ -3,7 +3,6 @@
 .air.toml
 /tmp/
 PROMPTS
-/data/
-/database/data/
+data/
 .claude/
 openspec/
