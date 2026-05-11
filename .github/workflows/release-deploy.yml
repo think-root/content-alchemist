@@ -1,0 +1,16 @@
+name: Release and Deploy 🚀
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Release
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy
+    needs: release
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
