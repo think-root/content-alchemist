@@ -1,3 +1,10 @@
+## [3.6.1](https://github.com/think-root/content-alchemist/compare/v3.6.0...v3.6.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **db:** migrate publish queue before indexing ([9767290](https://github.com/think-root/content-alchemist/commit/976729068ef23252180a789fdfc47de5507e1686))
+
 # [3.6.0](https://github.com/think-root/content-alchemist/compare/v3.5.0...v3.6.0) (2026-05-11)
 
 
