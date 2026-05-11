@@ -1,3 +1,10 @@
+# [3.6.0](https://github.com/think-root/content-alchemist/compare/v3.5.0...v3.6.0) (2026-05-11)
+
+
+### Features
+
+* **queue:** add publish-next promotion API ([cc2e606](https://github.com/think-root/content-alchemist/commit/cc2e606fcad51b306633e4b70978d87d92b26900))
+
 # [3.5.0](https://github.com/think-root/content-alchemist/compare/v3.4.0...v3.5.0) (2026-01-26)
 
 
