@@ -30,6 +30,22 @@ func setupPublicationQueueTestDB(t *testing.T) {
 	}
 }
 
+func setupEmptyTestDB(t *testing.T) {
+	t.Helper()
+
+	originalDB := DBThinkRoot
+	db, err := sql.Open("sqlite3", t.TempDir()+"/content-alchemist-test.db")
+	if err != nil {
+		t.Fatalf("failed to open test database: %v", err)
+	}
+
+	DBThinkRoot = db
+	t.Cleanup(func() {
+		DBThinkRoot.Close()
+		DBThinkRoot = originalDB
+	})
+}
+
 func insertTestRepository(t *testing.T, url string, dateAdded string, posted int) int64 {
 	t.Helper()
 
@@ -55,6 +71,39 @@ func insertTestRepository(t *testing.T, url string, dateAdded string, posted int
 	}
 
 	return id
+}
+
+func TestEnsurePublicationQueueSchemaMigratesLegacyTable(t *testing.T) {
+	setupEmptyTestDB(t)
+
+	_, err := DBThinkRoot.Exec(`
+		CREATE TABLE github_repositories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			url TEXT NOT NULL UNIQUE,
+			text TEXT NOT NULL,
+			posted INTEGER NOT NULL DEFAULT 0,
+			date_added DATETIME,
+			date_posted DATETIME
+		);
+	`)
+	if err != nil {
+		t.Fatalf("failed to create legacy table: %v", err)
+	}
+
+	if err := createTableIfNotExists(); err != nil {
+		t.Fatalf("createTableIfNotExists should not fail for legacy schema: %v", err)
+	}
+	if err := ensurePublicationQueueSchema(); err != nil {
+		t.Fatalf("failed to migrate legacy schema: %v", err)
+	}
+
+	hasPublishPriority, err := hasColumn("github_repositories", "publish_priority")
+	if err != nil {
+		t.Fatalf("failed to inspect migrated schema: %v", err)
+	}
+	if !hasPublishPriority {
+		t.Fatal("expected publish_priority column to be added")
+	}
 }
 
 func TestPublicationQueueSortingPromotedItemsFirst(t *testing.T) {

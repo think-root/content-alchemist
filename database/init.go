@@ -89,8 +89,6 @@ func createTableIfNotExists() error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_github_repositories_url ON github_repositories(url);
 	CREATE INDEX IF NOT EXISTS idx_github_repositories_posted ON github_repositories(posted);
-	CREATE INDEX IF NOT EXISTS idx_github_repositories_publication_queue
-		ON github_repositories(posted, publish_priority DESC, date_added ASC, id ASC);
 	`
 	_, err := DBThinkRoot.Exec(createTableQuery)
 	return err
