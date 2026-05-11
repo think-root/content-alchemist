@@ -4,5 +4,6 @@
 /tmp/
 PROMPTS
 /data/
+/database/data/
 .claude/
 openspec/

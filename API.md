@@ -381,7 +381,7 @@ curl -X POST \
 | ----------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `limit`         | integer | No       | Maximum number of repositories to return. Set to 0 to either return all records (if page and page_size are not specified) or use pagination mode (if page or page_size are specified).                                                                                                                        |
 | `posted`        | boolean | No       | Filter repositories by posted status. If not specified and limit is 0, returns all records regardless of posted status.                                                                                                                                                                                       |
-| `sort_by`       | string  | No       | Field to sort results by. Valid values:`id`, `date_added`, `date_posted`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
+| `sort_by`       | string  | No       | Field to sort results by. Valid values:`id`, `date_added`, `date_posted`, `publication_queue`. Default: `date_added` for unposted repositories, `date_posted` for posted repositories. When sorting by `date_posted`, repositories without a publication date (null) will be displayed according to the sorting order. |
 | `sort_order`    | string  | No       | Order of sorting. Valid values:`ASC` (ascending), `DESC` (descending). Default: `DESC`.                                                                                                                                                                                                                 |
 | `page`          | integer | No       | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination.                                                                                                                                                                  |
 | `page_size`     | integer | No       | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination.                                                                                                                                                                                   |
@@ -472,6 +472,7 @@ Returns raw multilingual text segments in the original format, e.g., "===(en)tex
 - When sorting by `date_posted`:
   - If `sort_order` = `ASC`: entries with null values are shown first, followed by dates in ascending order
   - If `sort_order` = `DESC`: entries with dates are shown in descending order first, followed by those with null values
+- When sorting by `publication_queue`: promoted unposted repositories are shown first by newest promotion, followed by normal unposted repositories ordered by oldest `date_added`
 - When sorting by `date_added` or `id`: standard ascending or descending sort
 - If `sort_by` is not specified, `date_posted` is used for posted=true and `date_added` for posted=false
 - If `sort_order` is not specified, `DESC` is used as default
@@ -493,7 +494,8 @@ Returns raw multilingual text segments in the original format, e.g., "===(en)tex
         "url": "https://github.com/example/repo",
         "text": "Repository description here.",
         "date_added": "2025-03-20T15:30:45Z",
-        "date_posted": null
+        "date_posted": null,
+        "publish_priority": null
       }
     ],
     "page": 1,
@@ -521,7 +523,7 @@ Note: This indicates raw multilingual text as stored.
 
 **Method:** `PATCH`
 
-**Description:** This endpoint updates the posted status of a repository identified by its URL. Note: when the URL does not exist, the current implementation returns 500 with a generic error rather than 404. Setting `posted=true` sets `date_posted` to current time; `posted=false` clears `date_posted` per [database.UpdatePostedStatusByURL()](database/update.go:8).
+**Description:** This endpoint updates the posted status of a repository identified by its URL. Note: when the URL does not exist, the current implementation returns 500 with a generic error rather than 404. Setting `posted=true` sets `date_posted` to current time; `posted=false` clears `date_posted`. Any status change clears `publish_priority` per [database.UpdatePostedStatusByURL()](database/update.go:9).
 
 **Curl Example:**
 
@@ -553,6 +555,57 @@ curl -X PATCH \
   "message": "Posted status updated successfully"
 }
 ```
+
+### /api/promote-repository/
+
+**Endpoint:** `/think-root/api/promote-repository/`
+
+**Method:** `PATCH`
+
+**Description:** Promotes an unposted repository to the front of the publication queue without changing its historical `date_added`. The newest promotion wins. Posted repositories cannot be promoted.
+
+**Curl Example:**
+
+```bash
+curl -X PATCH \
+  'http://localhost:8080/think-root/api/promote-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": 123
+  }'
+```
+
+**Request Parameters:**
+
+| Parameter | Type    | Required | Description                                   |
+| --------- | ------- | -------- | --------------------------------------------- |
+| `id`      | integer | No       | Repository ID. Provide either `id` or `url`.  |
+| `url`     | string  | No       | Repository URL. Provide either `id` or `url`. |
+
+**Response Example:**
+
+```json
+{
+  "status": "ok",
+  "message": "Repository promoted to publish next",
+  "data": {
+    "id": 123,
+    "posted": false,
+    "url": "https://github.com/example/repo",
+    "text": "Repository description here.",
+    "date_added": "2025-03-20T15:30:45Z",
+    "date_posted": null,
+    "publish_priority": 7
+  }
+}
+```
+
+**Error Responses:**
+
+- `400`: invalid request body or identifier
+- `404`: repository not found
+- `409`: repository is already posted
 
 ### /api/update-repository-text/
 

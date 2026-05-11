@@ -23,12 +23,13 @@ type getRepositoryRequestBody struct {
 }
 
 type getRepositoryItem struct {
-	ID         int64      `json:"id"`
-	Posted     bool       `json:"posted"`
-	URL        string     `json:"url"`
-	Text       string     `json:"text"`
-	DateAdded  *time.Time `json:"date_added"`
-	DatePosted *time.Time `json:"date_posted"`
+	ID              int64      `json:"id"`
+	Posted          bool       `json:"posted"`
+	URL             string     `json:"url"`
+	Text            string     `json:"text"`
+	DateAdded       *time.Time `json:"date_added"`
+	DatePosted      *time.Time `json:"date_posted"`
+	PublishPriority *int64     `json:"publish_priority"`
 }
 
 type getRepositoryResponse struct {
@@ -79,7 +80,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 		if len(matches) == 3 {
 			textLang := matches[1]
 			textContent := matches[2]
-			
+
 			if languageCode == "" {
 				return textContent, nil // Return content if no specific language requested
 			}
@@ -95,16 +96,16 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 		// Remove leading and trailing ===
 		content := strings.TrimPrefix(text, "===")
 		content = strings.TrimSuffix(content, "===")
-		
+
 		// Split by === to get language sections
 		sections := strings.Split(content, "===")
-		
+
 		languageTexts := make(map[string]string)
 		for _, section := range sections {
 			if section == "" {
 				continue
 			}
-			
+
 			// Parse each section: (code)text
 			langPattern := `^\(([a-z]{2})\)(.*)$`
 			re := regexp.MustCompile(langPattern)
@@ -115,7 +116,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 				languageTexts[lang] = content
 			}
 		}
-		
+
 		if languageCode == "" {
 			// Return Ukrainian by default if available, otherwise first available
 			if ukText, exists := languageTexts["uk"]; exists {
@@ -126,7 +127,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 			}
 			return text, nil // Fallback to original text
 		}
-		
+
 		if content, exists := languageTexts[languageCode]; exists {
 			return content, nil
 		}
@@ -159,7 +160,7 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 			server.RespondJSON(w, http.StatusBadRequest, "error", "text_language parameter must contain only one language code", nil)
 			return
 		}
-		
+
 		// Validate the language code
 		if err := server.ValidateLanguageCodes([]string{reqBody.TextLanguage}); err != nil {
 			server.RespondJSON(w, http.StatusBadRequest, "error", fmt.Sprintf("Invalid language code: %v", err), nil)
@@ -227,12 +228,13 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		}
 
 		items[i] = getRepositoryItem{
-			ID:         repo.ID,
-			Posted:     repo.Posted == 1,
-			URL:        repo.URL,
-			Text:       processedText,
-			DateAdded:  repo.DateAdded,
-			DatePosted: repo.DatePosted,
+			ID:              repo.ID,
+			Posted:          repo.Posted == 1,
+			URL:             repo.URL,
+			Text:            processedText,
+			DateAdded:       repo.DateAdded,
+			DatePosted:      repo.DatePosted,
+			PublishPriority: repo.PublishPriority,
 		}
 	}
 

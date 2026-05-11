@@ -41,6 +41,8 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 		case "DESC":
 			orderBy = "date_added DESC"
 		}
+	case "publication_queue":
+		orderBy = "publish_priority IS NULL ASC, publish_priority DESC, date_added ASC, id ASC"
 	case "id":
 		switch sortOrder {
 		case "ASC":
@@ -58,7 +60,7 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 	}
 
 	// Build data query
-	dataQuery := fmt.Sprintf("SELECT id, url, text, posted, date_added, date_posted FROM github_repositories %s ORDER BY %s", whereClause, orderBy)
+	dataQuery := fmt.Sprintf("SELECT id, url, text, posted, date_added, date_posted, publish_priority FROM github_repositories %s ORDER BY %s", whereClause, orderBy)
 
 	// Add LIMIT and OFFSET
 	if limit > 0 {
@@ -81,7 +83,7 @@ func GetRepository(limit int, offset int, posted *bool, sortBy string, sortOrder
 	// Scan results
 	for rows.Next() {
 		var repo GithubRepositories
-		err := rows.Scan(&repo.ID, &repo.URL, &repo.Text, &repo.Posted, &repo.DateAdded, &repo.DatePosted)
+		err := rows.Scan(&repo.ID, &repo.URL, &repo.Text, &repo.Posted, &repo.DateAdded, &repo.DatePosted, &repo.PublishPriority)
 		if err != nil {
 			return nil, 0, fmt.Errorf("error scanning repository: %v", err)
 		}
@@ -102,13 +104,13 @@ func GetRepositoryByIDOrURL(identifier string, isID bool) (*GithubRepositories, 
 
 	if isID {
 		query = `
-			SELECT id, url, text, posted, date_added, date_posted
+			SELECT id, url, text, posted, date_added, date_posted, publish_priority
 			FROM github_repositories
 			WHERE id = ?
 		`
 	} else {
 		query = `
-			SELECT id, url, text, posted, date_added, date_posted
+			SELECT id, url, text, posted, date_added, date_posted, publish_priority
 			FROM github_repositories
 			WHERE url = ?
 		`
@@ -121,6 +123,7 @@ func GetRepositoryByIDOrURL(identifier string, isID bool) (*GithubRepositories, 
 		&repo.Posted,
 		&repo.DateAdded,
 		&repo.DatePosted,
+		&repo.PublishPriority,
 	)
 
 	if err != nil {
