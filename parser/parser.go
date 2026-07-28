@@ -10,8 +10,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -39,6 +41,48 @@ type ReadmeHTTPError struct {
 
 func (e *ReadmeHTTPError) Error() string {
 	return fmt.Sprintf("HTTP error fetching README for %s: %d %s", e.Repo, e.StatusCode, e.Status)
+}
+
+// Precompiled regexps used to strip non-meaningful markup from a README when
+// estimating how much real textual content it carries.
+var (
+	reCodeFence  = regexp.MustCompile("(?s)```.*?```")
+	reInlineCode = regexp.MustCompile("`[^`]*`")
+	reMdImage    = regexp.MustCompile(`!\[[^\]]*\]\([^)]*\)`)
+	reMdLink     = regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
+	reHTMLTag    = regexp.MustCompile(`(?s)<[^>]*>`)
+	reBareURL    = regexp.MustCompile(`https?://\S+`)
+	reMdMarkup   = regexp.MustCompile("[#>*_~` \\t\\-=|!]+")
+	reWhitespace = regexp.MustCompile(`\s+`)
+)
+
+// MeaningfulContentLength returns the length (in runes) of the "meaningful"
+// text of a README after removing markdown/HTML markup, links, images, code
+// blocks and bare URLs. It is used as a heuristic to decide whether a README
+// carries enough substance to be worth sending to the LLM.
+func MeaningfulContentLength(readme string) int {
+	text := readme
+
+	// Remove code blocks first (they may contain URLs / markup we don't want).
+	text = reCodeFence.ReplaceAllString(text, " ")
+	text = reInlineCode.ReplaceAllString(text, " ")
+
+	// Images carry no textual meaning; drop them entirely.
+	text = reMdImage.ReplaceAllString(text, " ")
+
+	// Links: keep the visible label, drop the URL target.
+	text = reMdLink.ReplaceAllString(text, "$1")
+
+	// HTML tags (badges, <img>, <a>, etc.) and any remaining bare URLs.
+	text = reHTMLTag.ReplaceAllString(text, " ")
+	text = reBareURL.ReplaceAllString(text, " ")
+
+	// Strip leftover markdown punctuation/markup and collapse whitespace.
+	text = reMdMarkup.ReplaceAllString(text, " ")
+	text = reWhitespace.ReplaceAllString(text, " ")
+	text = strings.TrimSpace(text)
+
+	return utf8.RuneCountInString(text)
 }
 
 // browserHeaders adds common browser headers to avoid being blocked by GitHub
@@ -127,7 +171,6 @@ func GetTrendingRepos(maxRepos int, since, spokenLanguageCode string) ([]Reposit
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter existing repositories: %v", err)
 	}
-
 
 	return filteredRepos, nil
 }
