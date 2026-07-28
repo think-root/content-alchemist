@@ -249,8 +249,13 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 
 		cleanedText := server.CleanMultilingualText(processedText)
 		if err := server.ValidateGeneratedDescription(cleanedText); err != nil {
-			log.Printf("Rejected LLM output for URL %s: %v", repo.URL, err)
-			response.DontAdded = append(response.DontAdded, repo.URL)
+			// A low-quality/refusal description is a deliberate skip, not a
+			// processing failure: don't report it in dont_added (which would
+			// mark the whole collect run as "partial/failed") and don't count
+			// it toward max_repos. This mirrors the pre-LLM insufficient-content
+			// skip above, so the job keeps pulling repos until it has the
+			// requested number of good ones.
+			log.Printf("Skipping repository with low-quality LLM output: %s: %v", repo.URL, err)
 			continue
 		}
 
