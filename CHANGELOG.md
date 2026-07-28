@@ -1,3 +1,10 @@
+# [3.7.0](https://github.com/think-root/content-alchemist/compare/v3.6.3...v3.7.0) (2026-07-28)
+
+
+### Features
+
+* **generate:** filter out low-quality README descriptions ([f95cd93](https://github.com/think-root/content-alchemist/commit/f95cd93abc2d0070f3022a02afb5b7dc53fbd250))
+
 ## [3.6.3](https://github.com/think-root/content-alchemist/compare/v3.6.2...v3.6.3) (2026-05-11)
 
 
