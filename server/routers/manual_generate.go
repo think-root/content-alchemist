@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"content-alchemist/config"
 	"content-alchemist/database"
 	"content-alchemist/llm"
 	"content-alchemist/parser"
@@ -14,9 +15,10 @@ import (
 )
 
 const (
-	ErrorTypeAlreadyExists   = "already_exists"
-	ErrorTypeNoReadme        = "no_readme"
-	ErrorTypeProcessingError = "processing_error"
+	ErrorTypeAlreadyExists       = "already_exists"
+	ErrorTypeNoReadme            = "no_readme"
+	ErrorTypeInsufficientContent = "insufficient_content"
+	ErrorTypeProcessingError     = "processing_error"
 )
 
 type manualGenerateRequest struct {
@@ -105,6 +107,21 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		// Skip repositories whose README has too little meaningful content
+		// (e.g. just a video link or a set of badges) to avoid generating and
+		// storing garbage/refusal descriptions. Not applicable in direct-URL mode.
+		if !reqBody.UseDirectURL {
+			if contentLen := parser.MeaningfulContentLength(repoReadme); contentLen < config.README_MIN_CONTENT_LENGTH {
+				log.Printf("Skipping repository with insufficient README content for URL %s (error type: %s): %d chars", url, ErrorTypeInsufficientContent, contentLen)
+				response.DontAdded = append(response.DontAdded, url)
+				response.ErrorDetails[url] = ErrorDetail{
+					Type:    ErrorTypeInsufficientContent,
+					Message: "README has insufficient meaningful content",
+				}
+				continue
+			}
+		}
+
 		var textToProcess string
 		if reqBody.UseDirectURL {
 			textToProcess = url
@@ -120,7 +137,7 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 		// Add multilingual prompt instructions to the system message or create one
 		multilingualPrompt := server.BuildMultilingualPrompt(languageCodes)
-		
+
 		// Handle messages in config
 		if messages, exists := llmConfig["messages"]; exists {
 			// Try different possible types for messages
@@ -139,7 +156,7 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				
+
 				// If no system message found, add one at the beginning
 				if !systemMessageFound {
 					systemMsg := map[string]any{
@@ -157,7 +174,7 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 						convertedMessages = append(convertedMessages, msgMap)
 					}
 				}
-				
+
 				// Look for existing system message
 				systemMessageFound := false
 				for i, msg := range convertedMessages {
@@ -171,7 +188,7 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 				}
-				
+
 				// If no system message found, add one at the beginning
 				if !systemMessageFound {
 					systemMsg := map[string]any{
@@ -206,6 +223,16 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		cleanedText := server.CleanMultilingualText(processedText)
+		if err := server.ValidateGeneratedDescription(cleanedText); err != nil {
+			log.Printf("Rejected LLM output for URL %s (error type: %s): %v", url, ErrorTypeProcessingError, err)
+			response.DontAdded = append(response.DontAdded, url)
+			response.ErrorDetails[url] = ErrorDetail{
+				Type:    ErrorTypeProcessingError,
+				Message: "LLM produced an invalid or empty description",
+			}
+			continue
+		}
+
 		if err := database.AddRepositoryToDB(url, cleanedText); err != nil {
 			log.Printf("Error adding repository to database for URL %s (error type: %s): %v", url, ErrorTypeProcessingError, err)
 			response.DontAdded = append(response.DontAdded, url)

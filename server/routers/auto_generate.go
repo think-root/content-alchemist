@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"content-alchemist/config"
 	"content-alchemist/database"
 	"content-alchemist/llm"
 	"content-alchemist/parser"
@@ -140,6 +141,16 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		// Skip repositories whose README has too little meaningful content
+		// (e.g. just a video link or a set of badges) to avoid generating and
+		// storing garbage/refusal descriptions. Not applicable in direct-URL mode.
+		if !reqBody.UseDirectURL {
+			if contentLen := parser.MeaningfulContentLength(repoReadme); contentLen < config.README_MIN_CONTENT_LENGTH {
+				log.Printf("Skipping repository with insufficient README content: %s (%d chars)", repo.URL, contentLen)
+				continue
+			}
+		}
+
 		var textToProcess string
 		if reqBody.UseDirectURL {
 			textToProcess = repo.URL
@@ -237,6 +248,12 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		cleanedText := server.CleanMultilingualText(processedText)
+		if err := server.ValidateGeneratedDescription(cleanedText); err != nil {
+			log.Printf("Rejected LLM output for URL %s: %v", repo.URL, err)
+			response.DontAdded = append(response.DontAdded, repo.URL)
+			continue
+		}
+
 		if err := database.AddRepositoryToDB(repo.URL, cleanedText); err != nil {
 			log.Printf("Error adding repository to database for URL %s: %v", repo.URL, err)
 			response.DontAdded = append(response.DontAdded, repo.URL)

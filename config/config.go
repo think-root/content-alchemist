@@ -17,4 +17,10 @@ var (
 	POSTGRES_DB       = Env("POSTGRES_DB")
 	SERVER_PORT       = EnvWithDefault("SERVER_PORT", "9111")
 	SQLITE_DB_PATH    = EnvWithDefault("SQLITE_DB_PATH", "data/content-alchemist.db")
+
+	// README_MIN_CONTENT_LENGTH is the minimum number of "meaningful" characters
+	// (after stripping links, images, HTML and markdown markup) a README must have
+	// before it is sent to the LLM. Repositories below this threshold are skipped
+	// to avoid generating and storing garbage/refusal descriptions.
+	README_MIN_CONTENT_LENGTH = EnvAsInt("README_MIN_CONTENT_LENGTH", 150)
 )
