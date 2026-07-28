@@ -1,3 +1,10 @@
+## [3.7.1](https://github.com/think-root/content-alchemist/compare/v3.7.0...v3.7.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* **collect:** treat low-quality descriptions as skips, not failures ([c4dbadb](https://github.com/think-root/content-alchemist/commit/c4dbadb108897a508825a9a9009782cf8c260273))
+
 # [3.7.0](https://github.com/think-root/content-alchemist/compare/v3.6.3...v3.7.0) (2026-07-28)
 
 
