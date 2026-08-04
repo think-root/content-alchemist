@@ -7,13 +7,36 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 )
 
 var DBThinkRoot *sql.DB
+
+// SQLiteDriverName is the driver every connection to the app database must be
+// opened with — including test helpers, which would otherwise miss the custom
+// SQL functions registered below.
+const SQLiteDriverName = "sqlite3_unicode"
+
+var registerDriverOnce sync.Once
+
+// registerSQLiteDriver installs a SQLite driver that adds unicode_lower().
+// SQLite's built-in lower() and its case-insensitive LIKE only fold ASCII, so a
+// search for "старий" would not match a stored "Старий". The descriptions in
+// this database are Ukrainian, so substring search has to fold Unicode too.
+func registerSQLiteDriver() {
+	registerDriverOnce.Do(func() {
+		sql.Register(SQLiteDriverName, &sqlite3.SQLiteDriver{
+			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+				return conn.RegisterFunc("unicode_lower", strings.ToLower, true)
+			},
+		})
+	})
+}
 
 type GithubRepositories struct {
 	ID              int64      `json:"id"`
@@ -32,13 +55,15 @@ func (GithubRepositories) TableName() string {
 func init() {
 	var err error
 
+	registerSQLiteDriver()
+
 	dbPath := config.SQLITE_DB_PATH
 	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
 		log.Fatalf("Error creating database directory: %v", err)
 	}
 
-	DBThinkRoot, err = sql.Open("sqlite3", dbPath)
+	DBThinkRoot, err = sql.Open(SQLiteDriverName, dbPath)
 	if err != nil {
 		log.Fatalf("Error opening SQLite connection: %v", err)
 	}
@@ -52,6 +77,9 @@ func init() {
 	}
 	if err := ensurePublicationQueueSchema(); err != nil {
 		log.Fatalf("Error ensuring publication queue schema: %v", err)
+	}
+	if err := ensureArchiveSchema(); err != nil {
+		log.Fatalf("Error ensuring archive schema: %v", err)
 	}
 
 	var userVersion int
@@ -111,6 +139,28 @@ func ensurePublicationQueueSchema() error {
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to create publication queue index: %v", err)
+	}
+
+	return nil
+}
+
+func ensureArchiveSchema() error {
+	createTableQuery := `
+	CREATE TABLE IF NOT EXISTS archived_repositories (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		original_id INTEGER,
+		url TEXT NOT NULL,
+		text TEXT NOT NULL,
+		date_added DATETIME,
+		date_posted DATETIME,
+		date_archived DATETIME NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS idx_archived_repositories_url ON archived_repositories(url);
+	CREATE INDEX IF NOT EXISTS idx_archived_repositories_date_archived ON archived_repositories(date_archived DESC);
+	CREATE INDEX IF NOT EXISTS idx_archived_repositories_date_posted ON archived_repositories(date_posted);
+	`
+	if _, err := DBThinkRoot.Exec(createTableQuery); err != nil {
+		return fmt.Errorf("failed to create archived_repositories table: %v", err)
 	}
 
 	return nil
