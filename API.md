@@ -465,9 +465,10 @@ Returns raw multilingual text segments in the original format, e.g., "===(en)tex
   - If either `page` or `page_size` are specified, pagination mode is used.
 - When `limit` > 0:
   - Pagination mode is used. If `page` < 1, it defaults to 1. If `page_size` < 1, it defaults to 10.
+- **Effective page size.** A page holds `limit` rows when `limit` > 0, and `page_size` rows otherwise. The offset and `total_pages` are both derived from that effective size, and `page_size` in the response echoes it. So `{"limit": 4, "page_size": 2}` returns 4 rows per page and reports `page_size: 4` — sending both no longer makes consecutive pages overlap.
 - Response always includes:
   - `page`: Current page number (0 when returning all records without pagination; otherwise the active page number).
-  - `page_size`: Number of items per page (0 when returning all records without pagination; otherwise the active page size).
+  - `page_size`: Number of items per page (0 when returning all records without pagination; otherwise the effective page size described above).
   - `total_pages`: Total number of pages (1 when returning all records without pagination).
   - `total_items`: Total number of items matching the query.
 
@@ -877,5 +878,325 @@ curl -X DELETE \
 {
   "status": "error",
   "message": "repository with URL https://github.com/example/repo not found"
+}
+```
+
+## Archive
+
+Archiving **moves** a published repository out of `github_repositories` into the append-only `archived_repositories` table, keeping its original id, description, `date_added` and `date_posted`, and stamping `date_archived`.
+
+Consequences of the move:
+
+- The repository disappears from [`/api/get-repository/`](#apiget-repository) and its URL becomes free again, so the very same repository can be collected by [`/api/manual-generate/`](#apimanual-generate) or [`/api/auto-generate/`](#apiauto-generate) and published a second time.
+- URLs are **not** unique in the archive: the same repository may appear there several times, once per publication cycle.
+- There is **no way back**: a repository cannot be restored from the archive, and archived rows cannot be deleted. This is deliberate — it keeps the archive free of ambiguity when a repository has been published more than once.
+- Only **published** repositories (`posted = 1`) can be archived. Unpublished ones can only be removed with [`/api/delete-repository/`](#apidelete-repository).
+
+### /api/archive-repository/
+
+**Endpoint:** `/think-root/api/archive-repository/`
+
+**Method:** `POST`
+
+**Description:** Archives one or more published repositories, identified either by ids or by urls. Identifiers that cannot be archived (not found, not published, repeated in the same request) are reported in `failed` and do not abort the rest of the batch, so the response is `200` even when some or all identifiers were rejected. Implemented by [database.ArchiveRepositories()](database/archive.go:69).
+
+**Curl Examples:**
+
+Archive by ids:
+
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/archive-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ids": [123, 124]
+  }'
+```
+
+Archive by urls:
+
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/archive-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "urls": ["https://github.com/example/repo"]
+  }'
+```
+
+**Request Parameters:**
+
+| Parameter | Type             | Required | Description                             |
+| --------- | ---------------- | -------- | --------------------------------------- |
+| `ids`   | array of integer | No\*     | Repository ids (positive integers)      |
+| `urls`  | array of string  | No\*     | Repository urls (non-empty strings)     |
+
+\*Exactly one of `ids` or `urls` must be provided, non-empty, with at most 100 entries.
+
+**Validation Rules:**
+
+- Exactly one of `ids` or `urls` must be provided and must not be empty
+- Every id must be a positive integer
+- Every url must be a non-empty string
+- At most 100 identifiers per request
+
+**Failure Reasons (per identifier, inside `failed`):**
+
+| Reason                | Meaning                                              |
+| --------------------- | ---------------------------------------------------- |
+| `not_found`         | No repository with this id/url exists                |
+| `not_posted`        | The repository has not been published yet            |
+| `already_processed` | The identifier was repeated in the same request      |
+
+**Status Codes:**
+
+- 200: Success - see `archived` and `failed` for per-identifier results
+- 400: Bad Request - Validation errors
+- 401: Unauthorized - Invalid or missing Bearer token
+- 405: Method Not Allowed - Wrong HTTP method
+- 500: Internal Server Error - Database or server error
+
+**Success Response Example:**
+
+```json
+{
+  "status": "ok",
+  "message": "Archived 1 of 2 repositories",
+  "data": {
+    "archived": [
+      {
+        "archive_id": 11,
+        "id": 123,
+        "url": "https://github.com/example/repo",
+        "date_added": "2025-03-20T15:30:45Z",
+        "date_posted": "2025-03-25T09:00:00Z",
+        "date_archived": "2025-05-01T12:00:00Z"
+      }
+    ],
+    "failed": [
+      {
+        "identifier": "124",
+        "reason": "not_posted",
+        "message": "only published repositories can be archived"
+      }
+    ]
+  }
+}
+```
+
+**Error Response Examples:**
+
+```json
+{
+  "status": "error",
+  "message": "Either ids or urls must be provided"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "Provide either ids or urls, not both"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "A maximum of 100 ids can be archived per request"
+}
+```
+
+### /api/archive-old-repositories/
+
+**Endpoint:** `/think-root/api/archive-old-repositories/`
+
+**Method:** `POST`
+
+**Description:** Archives every published repository whose **publication** date is older than `days` days. The age is measured by `date_posted`, not by `date_added`; repositories without a publication date are never touched. Use `dry_run` to preview the affected repositories without changing anything. Implemented by [database.ArchiveRepositoriesOlderThan()](database/archive.go:169).
+
+**Curl Example:**
+
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/archive-old-repositories/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "days": 30,
+    "dry_run": false
+  }'
+```
+
+**Request Parameters:**
+
+| Parameter   | Type    | Required | Description                                                                        |
+| ----------- | ------- | -------- | ---------------------------------------------------------------------------------- |
+| `days`    | integer | Yes      | Archive repositories published more than this many days ago. Must be >= 1.         |
+| `dry_run` | boolean | No       | When `true`, returns the matching repositories without archiving them. Default `false`. |
+
+**Validation Rules:**
+
+- `days` must be a positive integer; `0` or a missing value is rejected so nothing can be wiped by accident
+
+**Status Codes:**
+
+- 200: Success - Repositories archived (or previewed)
+- 400: Bad Request - Validation errors
+- 401: Unauthorized - Invalid or missing Bearer token
+- 405: Method Not Allowed - Wrong HTTP method
+- 500: Internal Server Error - Database or server error
+
+**Success Response Example:**
+
+```json
+{
+  "status": "ok",
+  "message": "Archived 2 repositories published more than 30 days ago",
+  "data": {
+    "archived_count": 2,
+    "dry_run": false,
+    "archived": [
+      {
+        "archive_id": 11,
+        "id": 123,
+        "url": "https://github.com/example/repo",
+        "date_added": "2025-01-10T15:30:45Z",
+        "date_posted": "2025-01-15T09:00:00Z",
+        "date_archived": "2025-05-01T12:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+On a dry run `archive_id` is `0` and `date_archived` is `null`, because nothing was written.
+
+**Error Response Example:**
+
+```json
+{
+  "status": "error",
+  "message": "days must be a positive integer"
+}
+```
+
+### /api/get-archived-repositories/
+
+**Endpoint:** `/think-root/api/get-archived-repositories/`
+
+**Method:** `POST`
+
+**Description:** Returns a paginated, filtered and sorted view of the archive. Supports substring search over `url` and `text`, plus independent ranges over all three dates (`date_added`, `date_posted`, `date_archived`). Pagination behaves exactly like [`/api/get-repository/`](#apiget-repository). Implemented by [database.GetArchivedRepositories()](database/archive.go:256).
+
+**Curl Example:**
+
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/get-archived-repositories/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "page": 1,
+    "page_size": 10,
+    "url": "example",
+    "date_archived_from": "2025-01-01",
+    "sort_by": "date_archived",
+    "sort_order": "desc",
+    "text_language": "uk"
+  }'
+```
+
+**Request Parameters:**
+
+| Parameter              | Type    | Required | Description                                                                                                                       |
+| ---------------------- | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `limit`              | integer | No       | Maximum number of rows to return. Same semantics as in `/api/get-repository/`.                                                    |
+| `page`               | integer | No       | Page number for pagination (1-based).                                                                                             |
+| `page_size`          | integer | No       | Number of items per page. Defaults to 10 once pagination is active.                                                               |
+| `sort_by`            | string  | No       | Sort field. Valid values:`date_archived`, `date_posted`, `date_added`, `id`. Default: `date_archived`.                    |
+| `sort_order`         | string  | No       | `asc` or `desc` (case-insensitive). Default: `desc`.                                                                        |
+| `url`                | string  | No       | Case-insensitive substring match on the repository url, Cyrillic included. `%` and `_` are matched literally.                  |
+| `text`               | string  | No       | Case-insensitive substring match on the stored description, Cyrillic included.                                                     |
+| `date_added_from`    | string  | No       | Lower bound (inclusive) on `date_added`. RFC3339 timestamp or `YYYY-MM-DD`.                                                   |
+| `date_added_to`      | string  | No       | Upper bound (exclusive) on `date_added`. A bare `YYYY-MM-DD` covers the whole day.                                            |
+| `date_posted_from`   | string  | No       | Lower bound (inclusive) on `date_posted`.                                                                                       |
+| `date_posted_to`     | string  | No       | Upper bound (exclusive) on `date_posted`.                                                                                       |
+| `date_archived_from` | string  | No       | Lower bound (inclusive) on `date_archived`.                                                                                     |
+| `date_archived_to`   | string  | No       | Upper bound (exclusive) on `date_archived`.                                                                                     |
+| `text_language`      | string  | No       | When omitted, the raw multilingual text is returned as stored. When provided (e.g. `en`, `uk`), only that language is returned. |
+
+All filters are combined with `AND`.
+
+**Validation Rules:**
+
+- Dates must be an RFC3339 timestamp (`2025-05-01T12:00:00Z`) or a bare date (`2025-05-01`)
+- `sort_by` must be one of `date_archived`, `date_posted`, `date_added`, `id`
+- `sort_order` must be `asc` or `desc`
+- `limit`, `page` and `page_size` must not be negative
+- `text_language` must be a single valid language code (comma-separated lists are rejected)
+
+**Sorting Behavior:**
+
+- Rows whose sort column is `NULL` (possible for `date_posted` / `date_added`) are always placed **last**, in both `asc` and `desc`. `date_archived` is never null.
+- Ties are broken by `id` in the same direction as the requested order.
+
+**Pagination Details:**
+
+- Identical to [`/api/get-repository/`](#apiget-repository): when neither `page`, `page_size` nor `limit` is set, all matching rows are returned with `page=0`, `page_size=0`, `total_pages=1`. The same **effective page size** rule applies — a page holds `limit` rows when `limit` > 0, and the offset, `total_pages` and the echoed `page_size` all follow it.
+- `all` is the total number of rows in the archive, ignoring filters; `total_items` is the number of rows matching the current filter.
+
+**Status Codes:**
+
+- 200: Success - Archived repositories fetched
+- 400: Bad Request - Validation errors
+- 401: Unauthorized - Invalid or missing Bearer token
+- 405: Method Not Allowed - Wrong HTTP method
+- 500: Internal Server Error - Database or server error
+
+**Success Response Example:**
+
+```json
+{
+  "status": "ok",
+  "message": "Archived repositories fetched successfully",
+  "data": {
+    "all": 120,
+    "items": [
+      {
+        "id": 11,
+        "original_id": 123,
+        "url": "https://github.com/example/repo",
+        "text": "Repository description here.",
+        "date_added": "2025-03-20T15:30:45Z",
+        "date_posted": "2025-03-25T09:00:00Z",
+        "date_archived": "2025-05-01T12:00:00Z"
+      }
+    ],
+    "page": 1,
+    "page_size": 10,
+    "total_pages": 12,
+    "total_items": 120
+  }
+}
+```
+
+`id` is the archive row id; `original_id` is the id the repository had in `github_repositories` before it was archived (it may be reused by a later, unrelated repository).
+
+**Error Response Examples:**
+
+```json
+{
+  "status": "error",
+  "message": "Invalid date_archived_from: must be an RFC3339 timestamp or a YYYY-MM-DD date"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "sort_by must be one of: date_archived, date_posted, date_added, id"
 }
 ```
