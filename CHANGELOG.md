@@ -1,3 +1,16 @@
+# [3.8.0](https://github.com/think-root/content-alchemist/compare/v3.7.2...v3.8.0) (2026-08-04)
+
+
+### Bug Fixes
+
+* **deps:** upgrade golang.org/x/net to v0.57.0 ([4dab14b](https://github.com/think-root/content-alchemist/commit/4dab14ba466520cb767828e8dac740cdf9b2e909))
+* **pagination:** derive offset from the effective limit ([b07ef5a](https://github.com/think-root/content-alchemist/commit/b07ef5a120be8821748ba95eb4c99a04a2873a21))
+
+
+### Features
+
+* **archive:** add repository archive with full read API ([71ecb8b](https://github.com/think-root/content-alchemist/commit/71ecb8b09a04b8989ee981c4ca13a54bf3222962))
+
 ## [3.7.2](https://github.com/think-root/content-alchemist/compare/v3.7.1...v3.7.2) (2026-08-04)
 
 
