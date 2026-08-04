@@ -1,3 +1,10 @@
+## [3.7.2](https://github.com/think-root/content-alchemist/compare/v3.7.1...v3.7.2) (2026-08-04)
+
+
+### Bug Fixes
+
+* **generate:** stop rejecting valid repositories ([7225bd6](https://github.com/think-root/content-alchemist/commit/7225bd6bcc36f87cb29a834590e62ebf9bb770f1))
+
 ## [3.7.1](https://github.com/think-root/content-alchemist/compare/v3.7.0...v3.7.1) (2026-07-28)
 
 
