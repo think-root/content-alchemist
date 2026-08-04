@@ -189,12 +189,18 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 
 	var offset int
 	limit := reqBody.Limit
+	pageSize := reqBody.PageSize
 
 	if paginationRequested || limit > 0 {
-		offset = (reqBody.Page - 1) * reqBody.PageSize
 		if limit == 0 {
 			limit = reqBody.PageSize
 		}
+		// A page holds as many rows as the effective limit, so the offset and
+		// total_pages must both be derived from it. Deriving the offset from
+		// page_size while returning `limit` rows makes consecutive pages
+		// overlap whenever the two differ.
+		pageSize = limit
+		offset = (reqBody.Page - 1) * limit
 	}
 
 	repositories, totalItems, err := database.GetRepository(limit, offset, reqBody.Posted, sortBy, reqBody.SortOrder)
@@ -230,11 +236,9 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var totalPages int
-	if paginationRequested || limit > 0 {
-		totalPages = (totalItems + reqBody.PageSize - 1) / reqBody.PageSize
-	} else {
-		totalPages = 1
+	totalPages := 1
+	if pageSize > 0 {
+		totalPages = (totalItems + pageSize - 1) / pageSize
 	}
 
 	payload := &getRepositoryResponse{
@@ -243,7 +247,7 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 		Unposted:   unposted,
 		Items:      items,
 		Page:       reqBody.Page,
-		PageSize:   reqBody.PageSize,
+		PageSize:   pageSize,
 		TotalPages: totalPages,
 		TotalItems: totalItems,
 	}
