@@ -16,8 +16,11 @@ import (
 
 const (
 	ErrorTypeAlreadyExists       = "already_exists"
+	ErrorTypeInvalidURL          = "invalid_url"
 	ErrorTypeNoReadme            = "no_readme"
 	ErrorTypeInsufficientContent = "insufficient_content"
+	ErrorTypeNonEnglishReadme    = "non_english_readme"
+	ErrorTypeLowQuality          = "low_quality"
 	ErrorTypeProcessingError     = "processing_error"
 )
 
@@ -59,12 +62,40 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urls := strings.Fields(reqBody.URL)
 	response := manualGenerateResponse{
 		Status:       "ok",
 		Added:        []string{},
 		DontAdded:    []string{},
 		ErrorDetails: make(map[string]ErrorDetail),
+	}
+
+	// Normalize every input into the canonical https://github.com/owner/repo
+	// form. This accepts URLs carrying tracking parameters, a ".git" suffix or a
+	// deep path, and makes the duplicate check independent of such differences.
+	var urls []string
+	seen := make(map[string]bool)
+	for _, raw := range strings.Fields(reqBody.URL) {
+		normalized, err := parser.NormalizeRepoURL(raw)
+		if err != nil {
+			log.Printf("Rejected repository URL %s (error type: %s): %v", raw, ErrorTypeInvalidURL, err)
+			response.DontAdded = append(response.DontAdded, raw)
+			response.ErrorDetails[raw] = ErrorDetail{
+				Type:    ErrorTypeInvalidURL,
+				Message: "Not a GitHub repository URL. Expected format: https://github.com/username/repository",
+			}
+			continue
+		}
+
+		if seen[normalized] {
+			continue
+		}
+		seen[normalized] = true
+		urls = append(urls, normalized)
+	}
+
+	if len(urls) == 0 {
+		writeManualGenerateResponse(w, &response)
+		return
 	}
 
 	filteredURLs, err := parser.FilterExistingURLs(urls)
@@ -98,13 +129,20 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 		repoReadme, err := parser.GetRepoReadme(url)
 		if err != nil {
-			log.Printf("Error fetching repo readme for URL %s (error type: %s): %v", url, ErrorTypeNoReadme, err)
-			response.DontAdded = append(response.DontAdded, url)
-			response.ErrorDetails[url] = ErrorDetail{
-				Type:    ErrorTypeNoReadme,
-				Message: "README file not found in repository",
+			// In direct-URL mode the README is not used as LLM input, so a failed
+			// fetch must not block the repository.
+			if !reqBody.UseDirectURL {
+				log.Printf("Error fetching repo readme for URL %s (error type: %s): %v", url, ErrorTypeNoReadme, err)
+				response.DontAdded = append(response.DontAdded, url)
+				response.ErrorDetails[url] = ErrorDetail{
+					Type:    ErrorTypeNoReadme,
+					Message: "README file not found in repository",
+				}
+				continue
 			}
-			continue
+
+			log.Printf("Could not fetch README for URL %s, continuing in direct-URL mode: %v", url, err)
+			repoReadme = ""
 		}
 
 		// Skip repositories whose README has too little meaningful content
@@ -115,8 +153,23 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Skipping repository with insufficient README content for URL %s (error type: %s): %d chars", url, ErrorTypeInsufficientContent, contentLen)
 				response.DontAdded = append(response.DontAdded, url)
 				response.ErrorDetails[url] = ErrorDetail{
-					Type:    ErrorTypeInsufficientContent,
-					Message: "README has insufficient meaningful content",
+					Type: ErrorTypeInsufficientContent,
+					Message: fmt.Sprintf("README has insufficient meaningful content (%d < %d chars)",
+						contentLen, config.README_MIN_CONTENT_LENGTH),
+				}
+				continue
+			}
+		}
+
+		// Only English-language repositories are published.
+		if repoReadme != "" {
+			if isEnglish, ratio := parser.IsEnglishReadme(repoReadme); !isEnglish {
+				log.Printf("Skipping repository with non-English README for URL %s (error type: %s): %.0f%% non-Latin letters", url, ErrorTypeNonEnglishReadme, ratio*100)
+				response.DontAdded = append(response.DontAdded, url)
+				response.ErrorDetails[url] = ErrorDetail{
+					Type: ErrorTypeNonEnglishReadme,
+					Message: fmt.Sprintf("README is not predominantly English (%.0f%% non-Latin letters)",
+						ratio*100),
 				}
 				continue
 			}
@@ -224,11 +277,11 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 
 		cleanedText := server.CleanMultilingualText(processedText)
 		if err := server.ValidateGeneratedDescription(cleanedText); err != nil {
-			log.Printf("Rejected LLM output for URL %s (error type: %s): %v", url, ErrorTypeProcessingError, err)
+			log.Printf("Rejected LLM output for URL %s (error type: %s): %v", url, ErrorTypeLowQuality, err)
 			response.DontAdded = append(response.DontAdded, url)
 			response.ErrorDetails[url] = ErrorDetail{
-				Type:    ErrorTypeProcessingError,
-				Message: "LLM produced an invalid or empty description",
+				Type:    ErrorTypeLowQuality,
+				Message: fmt.Sprintf("LLM description rejected: %v", err),
 			}
 			continue
 		}
@@ -246,6 +299,12 @@ func ManualGenerate(w http.ResponseWriter, r *http.Request) {
 		response.Added = append(response.Added, url)
 	}
 
+	writeManualGenerateResponse(w, &response)
+}
+
+// writeManualGenerateResponse fills in the aggregate status and writes the
+// response as JSON.
+func writeManualGenerateResponse(w http.ResponseWriter, response *manualGenerateResponse) {
 	if len(response.Added) > 0 && len(response.DontAdded) > 0 {
 		response.Status = "partial"
 		response.ErrorMessage = fmt.Sprintf("%d repositories failed to process", len(response.DontAdded))

@@ -131,13 +131,17 @@ If you don't provide a `messages` array, the server creates one with default mul
 
 | Field     | Type   | Description                                                                                    |
 | --------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `type`    | string | Error type: `already_exists`, `no_readme`, or `processing_error`                               |
+| `type`    | string | Error type: `invalid_url`, `already_exists`, `no_readme`, `insufficient_content`, `non_english_readme`, `low_quality` or `processing_error` |
 | `message` | string | Human-readable error message describing what went wrong                                        |
 
 **Error Types:**
 
+- `invalid_url`: The value is not a GitHub repository URL. Any GitHub URL form is accepted (missing scheme, `http://`, `www.`, tracking query parameters, a `.git` suffix, a deep path such as `/tree/main/src`) and normalized to `https://github.com/<owner>/<repo>`; the reported key is the original input
 - `already_exists`: Repository already exists in the database
-- `no_readme`: README file not found in the repository
+- `no_readme`: README file not found in the repository (not reported when `use_direct_url` is enabled — the README is then optional)
+- `insufficient_content`: README has less meaningful content than `README_MIN_CONTENT_LENGTH` (default 150); the message includes the measured length
+- `non_english_readme`: README is not predominantly written in a Latin script — more than `README_MAX_NON_LATIN_PERCENT` (default 20) percent of its letters are non-Latin; the message includes the measured share
+- `low_quality`: The generated description was rejected as empty, shorter than `MIN_DESCRIPTION_LENGTH` (default 40) or as an LLM refusal; the message includes the exact reason
 - `processing_error`: LLM processing or database insertion failed
 
 **Response Examples:**

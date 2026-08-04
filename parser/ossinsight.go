@@ -1,19 +1,34 @@
 package parser
 
 import (
+	"content-alchemist/config"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
+	"unicode"
 )
 
-func isEnglishOnly(text string) bool {
-	if text == "" {
+// isEnglishText reports whether a short text (e.g. a repository description) is
+// predominantly written in a Latin script. Unlike a plain ASCII check it does not
+// reject English text containing em-dashes, accents or emoji.
+func isEnglishText(text string) bool {
+	var letters, nonLatin int
+	for _, r := range text {
+		if !unicode.IsLetter(r) {
+			continue
+		}
+		letters++
+		if !unicode.Is(unicode.Latin, r) {
+			nonLatin++
+		}
+	}
+
+	if letters == 0 {
 		return true
 	}
-	asciiOnly := regexp.MustCompile(`^[\x20-\x7E]*$`)
-	return asciiOnly.MatchString(text)
+
+	return float64(nonLatin)/float64(letters)*100 <= float64(config.README_MAX_NON_LATIN_PERCENT)
 }
 
 type OssInsightResponse struct {
@@ -74,7 +89,7 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 
 	var allRepos []Repository
 	for _, row := range apiRes.Data.Rows {
-		if !isEnglishOnly(row.Description) {
+		if !isEnglishText(row.Description) {
 			continue
 		}
 
@@ -91,5 +106,5 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter existing repositories: %v", err)
 	}
-		return filteredRepos, nil
+	return filteredRepos, nil
 }

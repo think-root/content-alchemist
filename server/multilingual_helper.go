@@ -1,6 +1,7 @@
 package server
 
 import (
+	"content-alchemist/config"
 	"fmt"
 	"regexp"
 	"sort"
@@ -216,40 +217,43 @@ func ValidateMultilingualContent(text string) error {
 	return nil
 }
 
-// minDescriptionLength is the minimum acceptable length (in runes) of a single
-// generated description segment. The prompt asks for 200-500 chars, so anything
-// well below that is almost certainly a truncated answer or a refusal.
-const minDescriptionLength = 120
-
-// refusalMarkers are lowercase substrings that strongly indicate the LLM
-// refused to produce a description (e.g. because the README had no real
-// content) instead of generating one. Extend this list as new patterns appear.
-var refusalMarkers = []string{
-	"надайте вміст",
-	"надайте текст",
-	"надайте більше",
-	"не дозволяє мені",
-	"не можу проаналізувати",
-	"не можу згенерувати",
-	"не можу створити",
-	"будь ласка, надайте",
-	"я не маю доступу",
-	"немає доступу",
-	"недостатньо інформації",
-	"недостатньо даних",
-	"readme.md",
-	"i cannot",
-	"i can't",
-	"unable to",
-	"please provide",
+// refusalMarkers match phrases that indicate the LLM refused to produce a
+// description (e.g. because the README had no real content) instead of
+// generating one. They are deliberately narrow: a legitimate description may
+// well mention "README.md" or contain the words "unable to", so only complete
+// refusal phrases count. Extend this list as new patterns appear.
+var refusalMarkers = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)надайте (вміст|текст|більше|більш)`),
+	regexp.MustCompile(`(?i)не дозволяє мені`),
+	regexp.MustCompile(`(?i)не можу (проаналізувати|згенерувати|створити|надати|описати)`),
+	regexp.MustCompile(`(?i)будь ласка,? надайте`),
+	regexp.MustCompile(`(?i)(я )?не маю доступу`),
+	regexp.MustCompile(`(?i)немає доступу`),
+	regexp.MustCompile(`(?i)недостатньо (інформації|даних|вмісту)`),
+	regexp.MustCompile(`(?i)\bi (cannot|can't|can not)\b`),
+	regexp.MustCompile(`(?i)\b(i am|i'm) unable to\b`),
+	regexp.MustCompile(`(?i)\bcannot (generate|create|provide|analyz|describe)`),
+	regexp.MustCompile(`(?i)\bplease (provide|share|paste)\b`),
+	regexp.MustCompile(`(?i)\b(provide|share|paste) (the |your |me the )?(readme|repository content|content|text)\b`),
+	regexp.MustCompile(`(?i)\bno (readme|content|information) (was )?(provided|found|available)\b`),
 }
+
+// refusalScanRunes limits refusal detection to the beginning of a description:
+// an LLM refusal always opens with the refusal, while a genuine description may
+// mention similar wording later on.
+const refusalScanRunes = 200
 
 // IsLikelyRefusal reports whether the given text looks like an LLM refusal
 // rather than a genuine repository description.
 func IsLikelyRefusal(text string) bool {
-	lower := strings.ToLower(text)
+	head := text
+	if utf8.RuneCountInString(head) > refusalScanRunes {
+		runes := []rune(head)
+		head = string(runes[:refusalScanRunes])
+	}
+
 	for _, marker := range refusalMarkers {
-		if strings.Contains(lower, marker) {
+		if marker.MatchString(head) {
 			return true
 		}
 	}
@@ -286,9 +290,9 @@ func ValidateGeneratedDescription(text string) error {
 			content = content[idx+2:]
 		}
 
-		if utf8.RuneCountInString(content) < minDescriptionLength {
+		if utf8.RuneCountInString(content) < config.MIN_DESCRIPTION_LENGTH {
 			return fmt.Errorf("generated description segment too short (%d < %d chars)",
-				utf8.RuneCountInString(content), minDescriptionLength)
+				utf8.RuneCountInString(content), config.MIN_DESCRIPTION_LENGTH)
 		}
 		if IsLikelyRefusal(content) {
 			return fmt.Errorf("generated description looks like an LLM refusal")
@@ -298,7 +302,16 @@ func ValidateGeneratedDescription(text string) error {
 	return nil
 }
 
+// reLanguageMarker matches a language marker in any of the shapes LLMs actually
+// emit: the canonical "===(en)" as well as "== (en)" or "=== (en) ". The
+// separator length and surrounding whitespace vary between models and even
+// between segments of a single response.
+var reLanguageMarker = regexp.MustCompile(`\s*={2,}\s*\(([a-zA-Z]{2,3})\)\s*`)
+
 // CleanMultilingualText cleans and standardizes the multilingual text format.
+// Markers are normalized to exactly "===(lang)" and a single trailing "===" is
+// ensured, so that IsMultilingualText/ParseMultilingualText can process the
+// result and each language segment gets validated on its own.
 func CleanMultilingualText(text string) string {
 	// Don't process empty strings.
 	if text == "" {
@@ -309,24 +322,26 @@ func CleanMultilingualText(text string) string {
 	processedText := strings.TrimSpace(text)
 
 	// Check if the text is intended to be in the multilingual format.
-	// A simple check for the initial pattern is enough.
-	if !strings.Contains(processedText, "===(") {
+	loc := reLanguageMarker.FindStringIndex(processedText)
+	if loc == nil {
 		// If it's not a multilingual text, return it as is.
 		return text
 	}
 
-	// Regex to remove spaces between '===' and '(en)'.
-	re1 := regexp.MustCompile(`===\s*\n*\s*\(([a-zA-Z]{2,3})\)`)
-	processedText = re1.ReplaceAllString(processedText, "===($1)")
-
-	// Regex to remove spaces between '(en)' and '==='
-	re2 := regexp.MustCompile(`\)\s*\n*\s*===`)
-	processedText = re2.ReplaceAllString(processedText, ")===")
-
-	// Ensure the text ends with "===", but don't add it if it's already there.
-	if !strings.HasSuffix(processedText, "===") {
-		processedText += "==="
+	// Anything before the first marker is not part of any segment. Drop it only
+	// when it carries no text, so that a stray prefix is never silently deleted.
+	if loc[0] > 0 {
+		if strings.TrimSpace(processedText[:loc[0]]) != "" {
+			return text
+		}
+		processedText = processedText[loc[0]:]
 	}
 
-	return processedText
+	// Normalize every marker to the canonical form.
+	processedText = reLanguageMarker.ReplaceAllString(processedText, "===($1)")
+
+	// Drop any trailing separator (of whatever length) and re-add exactly one.
+	processedText = strings.TrimRight(processedText, "= \t\n\r")
+
+	return strings.TrimSpace(processedText) + "==="
 }

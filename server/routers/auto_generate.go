@@ -151,6 +151,12 @@ func AutoGenerate(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// Only English-language repositories are published.
+		if isEnglish, ratio := parser.IsEnglishReadme(repoReadme); !isEnglish {
+			log.Printf("Skipping repository with non-English README: %s (%.0f%% non-Latin letters)", repo.URL, ratio*100)
+			continue
+		}
+
 		var textToProcess string
 		if reqBody.UseDirectURL {
 			textToProcess = repo.URL

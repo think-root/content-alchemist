@@ -23,4 +23,16 @@ var (
 	// before it is sent to the LLM. Repositories below this threshold are skipped
 	// to avoid generating and storing garbage/refusal descriptions.
 	README_MIN_CONTENT_LENGTH = EnvAsInt("README_MIN_CONTENT_LENGTH", 150)
+
+	// README_MAX_NON_LATIN_PERCENT is the maximum share (in percent) of non-Latin
+	// letters a README may contain and still be treated as English. READMEs written
+	// in Chinese, Japanese, Korean, Cyrillic, etc. are skipped because the pipeline
+	// only publishes English-language repositories.
+	README_MAX_NON_LATIN_PERCENT = EnvAsInt("README_MAX_NON_LATIN_PERCENT", 20)
+
+	// MIN_DESCRIPTION_LENGTH is the minimum length (in runes) of a single generated
+	// description segment. The generation prompt asks for a very concise description
+	// (max ~275 characters), so this only guards against empty or truncated output;
+	// refusal messages are caught by the refusal-phrase detector instead.
+	MIN_DESCRIPTION_LENGTH = EnvAsInt("MIN_DESCRIPTION_LENGTH", 40)
 )

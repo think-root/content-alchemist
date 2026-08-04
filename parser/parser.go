@@ -10,9 +10,11 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
@@ -61,6 +63,13 @@ var (
 // blocks and bare URLs. It is used as a heuristic to decide whether a README
 // carries enough substance to be worth sending to the LLM.
 func MeaningfulContentLength(readme string) int {
+	return utf8.RuneCountInString(meaningfulText(readme))
+}
+
+// meaningfulText strips markdown/HTML markup, links, images, code blocks and
+// bare URLs from a README, leaving only its prose. Both the content-length and
+// the language heuristics operate on this cleaned text.
+func meaningfulText(readme string) string {
 	text := readme
 
 	// Remove code blocks first (they may contain URLs / markup we don't want).
@@ -80,9 +89,120 @@ func MeaningfulContentLength(readme string) int {
 	// Strip leftover markdown punctuation/markup and collapse whitespace.
 	text = reMdMarkup.ReplaceAllString(text, " ")
 	text = reWhitespace.ReplaceAllString(text, " ")
-	text = strings.TrimSpace(text)
 
-	return utf8.RuneCountInString(text)
+	return strings.TrimSpace(text)
+}
+
+// maxReadmeBytes caps how much of a README is kept before sending it to the LLM.
+const maxReadmeBytes = 70000
+
+// minLettersForLanguageCheck is the number of letters a README must contain
+// before its language can be judged. Below that there is nothing to measure —
+// the content-length heuristic is the relevant guard for such READMEs.
+const minLettersForLanguageCheck = 30
+
+// NonLatinLetterRatio reports the share of non-Latin letters (Han, Hiragana,
+// Katakana, Hangul, Cyrillic, Arabic, ...) among all letters of the README's
+// meaningful text, together with the total number of letters found.
+func NonLatinLetterRatio(readme string) (float64, int) {
+	var letters, nonLatin int
+
+	for _, r := range meaningfulText(readme) {
+		if !unicode.IsLetter(r) {
+			continue
+		}
+		letters++
+		if !unicode.Is(unicode.Latin, r) {
+			nonLatin++
+		}
+	}
+
+	if letters == 0 {
+		return 0, 0
+	}
+
+	return float64(nonLatin) / float64(letters), letters
+}
+
+// IsEnglishReadme reports whether a README is predominantly written in a
+// Latin-script (i.e. presumably English) language. It also returns the measured
+// non-Latin ratio so callers can report it. READMEs with too few letters to
+// judge are accepted.
+func IsEnglishReadme(readme string) (bool, float64) {
+	ratio, letters := NonLatinLetterRatio(readme)
+	if letters < minLettersForLanguageCheck {
+		return true, ratio
+	}
+
+	return ratio*100 <= float64(config.README_MAX_NON_LATIN_PERCENT), ratio
+}
+
+// reservedGitHubPaths are first path segments of github.com that can never be a
+// repository owner.
+var reservedGitHubPaths = map[string]bool{
+	"orgs":          true,
+	"settings":      true,
+	"topics":        true,
+	"sponsors":      true,
+	"features":      true,
+	"marketplace":   true,
+	"apps":          true,
+	"collections":   true,
+	"trending":      true,
+	"explore":       true,
+	"notifications": true,
+	"pulls":         true,
+	"issues":        true,
+	"search":        true,
+}
+
+// NormalizeRepoURL converts any form of GitHub repository reference into the
+// canonical "https://github.com/<owner>/<repo>" form. It tolerates a missing
+// scheme, "http://", a "www." host, tracking query parameters, fragments, a
+// ".git" suffix, a trailing slash and deep paths such as "/tree/main/src".
+func NormalizeRepoURL(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", fmt.Errorf("empty repository URL")
+	}
+
+	// url.Parse treats a scheme-less value as a bare path, so add one.
+	if !strings.Contains(trimmed, "://") {
+		trimmed = "https://" + trimmed
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "", fmt.Errorf("not a valid URL: %w", err)
+	}
+
+	switch parsed.Scheme {
+	case "http", "https":
+	default:
+		return "", fmt.Errorf("unsupported URL scheme %q", parsed.Scheme)
+	}
+
+	host := strings.ToLower(parsed.Hostname())
+	if host != "github.com" && host != "www.github.com" {
+		return "", fmt.Errorf("not a github.com URL: %q", host)
+	}
+
+	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+	if len(segments) < 2 || segments[0] == "" || segments[1] == "" {
+		return "", fmt.Errorf("URL does not point to a repository")
+	}
+
+	owner := segments[0]
+	repo := strings.TrimSuffix(segments[1], ".git")
+
+	if reservedGitHubPaths[strings.ToLower(owner)] {
+		return "", fmt.Errorf("%q is not a repository owner", owner)
+	}
+	if repo == "" {
+		return "", fmt.Errorf("URL does not point to a repository")
+	}
+
+	return fmt.Sprintf("https://github.com/%s/%s", owner, repo), nil
 }
 
 // browserHeaders adds common browser headers to avoid being blocked by GitHub
@@ -209,7 +329,11 @@ func FilterExistingURLs(urls []string) ([]string, error) {
 }
 
 func GetRepoReadme(repo string) (string, error) {
-	repo = strings.TrimPrefix(repo, "https://github.com/")
+	if normalized, err := NormalizeRepoURL(repo); err == nil {
+		repo = strings.TrimPrefix(normalized, "https://github.com/")
+	} else {
+		repo = strings.TrimPrefix(repo, "https://github.com/")
+	}
 	url := fmt.Sprintf("https://api.github.com/repos/%s/readme", repo)
 
 	type gitHubAPIResponse struct {
@@ -265,8 +389,12 @@ func GetRepoReadme(repo string) (string, error) {
 	}
 
 	content := string(decodedContent)
-	if len(content) > 70000 {
-		content = content[:70000]
+	if len(content) > maxReadmeBytes {
+		// Cut on a rune boundary so the truncated README stays valid UTF-8.
+		content = content[:maxReadmeBytes]
+		for len(content) > 0 && !utf8.ValidString(content) {
+			content = content[:len(content)-1]
+		}
 	}
 
 	return content, nil

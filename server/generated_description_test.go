@@ -16,6 +16,24 @@ func TestValidateGeneratedDescription(t *testing.T) {
 		{name: "valid single", text: validUk, wantErr: false},
 		{name: "valid multilingual", text: "===(uk)" + validUk + "===", wantErr: false},
 		{name: "multilingual with refusal segment", text: "===(uk)" + validUk + "===(en)I cannot analyze this repository without a README.===", wantErr: true},
+		{
+			// The generation prompt demands maximum brevity (max ~275 chars), so a
+			// short one-sentence description must be accepted.
+			name:    "concise english description",
+			text:    "JavaScript scripts for spoofing device location by intercepting and modifying location service responses via MITM proxy rules.",
+			wantErr: false,
+		},
+		{
+			// "README" mentioned mid-sentence is not a refusal.
+			name:    "description mentioning readme",
+			text:    "CLI tool that generates a project README.md from source comments, inferring usage examples and badges from the build configuration.",
+			wantErr: false,
+		},
+		{
+			name:    "english refusal",
+			text:    "I cannot generate a description without the README content. Please provide the repository documentation so I can summarize it for you here.",
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
