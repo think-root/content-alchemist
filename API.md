@@ -390,6 +390,25 @@ curl -X POST \
 | `page`          | integer | No       | Page number for pagination (1-based). If not specified along with page_size and limit is 0, all records will be returned without pagination.                                                                                                                                                                  |
 | `page_size`     | integer | No       | Number of items per page. If not specified along with page and limit is 0, all records will be returned without pagination.                                                                                                                                                                                   |
 | `text_language` | string  | No       | Optional. When omitted, raw multilingual text is returned in the original format, for example "===(en)text===(uk)text===". When provided (e.g., "en", "uk"), the API extracts and returns only the specified language’s text.                                                                                |
+| `id`            | integer | No       | Address a single repository directly by id. Mutually exclusive with `url`. When set, sorting, `limit` and pagination are ignored and the response carries exactly that repository.                                                                                                                        |
+| `url`           | string  | No       | Address a single repository directly by url. Mutually exclusive with `id`. Same semantics as `id`.                                                                                                                                                                                                       |
+
+**Addressing a single repository:**
+
+`id` and `url` exist for callers that already know which repository they want — for example content-maestro re-sending a publication that failed for one social connector. Because the item is fetched by identity rather than pulled from the queue, it is returned even when it is already posted. `text_language` still applies, so the caller gets the text in the language its target connector is configured for.
+
+```bash
+curl -X POST \
+  'http://localhost:8080/think-root/api/get-repository/' \
+  -H 'Authorization: Bearer <BEARER_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://github.com/resemble-ai/chatterbox",
+    "text_language": "en"
+  }'
+```
+
+Responses: `200` with a single-item payload (`page`, `page_size`, `total_pages`, `total_items` are all `1`; `all`/`posted`/`unposted` still report global counts), `400` when both `id` and `url` are given or the identifier is empty/non-positive, `404` when no repository matches.
 
 **Request Examples:**
 

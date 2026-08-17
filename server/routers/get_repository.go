@@ -8,18 +8,21 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type getRepositoryRequestBody struct {
-	Limit        int    `json:"limit"`
-	Posted       *bool  `json:"posted"`
-	SortBy       string `json:"sort_by"`
-	SortOrder    string `json:"sort_order"`
-	Page         int    `json:"page"`
-	PageSize     int    `json:"page_size"`
-	TextLanguage string `json:"text_language"`
+	Limit        int     `json:"limit"`
+	Posted       *bool   `json:"posted"`
+	SortBy       string  `json:"sort_by"`
+	SortOrder    string  `json:"sort_order"`
+	Page         int     `json:"page"`
+	PageSize     int     `json:"page_size"`
+	TextLanguage string  `json:"text_language"`
+	ID           *int64  `json:"id"`
+	URL          *string `json:"url"`
 }
 
 type getRepositoryItem struct {
@@ -138,6 +141,82 @@ func processTextForLanguage(text, languageCode string) (string, error) {
 	return ParseMultilingualText(text, languageCode)
 }
 
+// getSingleRepository answers a get-repository request that addresses one
+// repository by id or url instead of querying the queue.
+func getSingleRepository(w http.ResponseWriter, reqBody *getRepositoryRequestBody) {
+	if reqBody.ID != nil && reqBody.URL != nil {
+		server.RespondJSON(w, http.StatusBadRequest, "error", "Provide either id or url, not both", nil)
+		return
+	}
+
+	var identifier string
+	var isID bool
+
+	if reqBody.ID != nil {
+		if *reqBody.ID <= 0 {
+			server.RespondJSON(w, http.StatusBadRequest, "error", "ID must be a positive integer", nil)
+			return
+		}
+		identifier = strconv.FormatInt(*reqBody.ID, 10)
+		isID = true
+	} else {
+		if strings.TrimSpace(*reqBody.URL) == "" {
+			server.RespondJSON(w, http.StatusBadRequest, "error", "URL cannot be empty", nil)
+			return
+		}
+		identifier = strings.TrimSpace(*reqBody.URL)
+		isID = false
+	}
+
+	all, posted, unposted, err := countRepositories()
+	if err != nil {
+		log.Printf("Error counting repositories: %v", err)
+		server.RespondJSON(w, http.StatusInternalServerError, "error", "Failed to count repositories", nil)
+		return
+	}
+
+	repo, err := database.GetRepositoryByIDOrURL(identifier, isID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			server.RespondJSON(w, http.StatusNotFound, "error", err.Error(), nil)
+			return
+		}
+		log.Printf("Error fetching repository %s: %v", identifier, err)
+		server.RespondJSON(w, http.StatusInternalServerError, "error", "Failed to fetch repository", nil)
+		return
+	}
+
+	processedText := repo.Text
+	if reqBody.TextLanguage != "" {
+		processedText, err = processTextForLanguage(repo.Text, reqBody.TextLanguage)
+		if err != nil {
+			log.Printf("Error processing text for repository %d: %v", repo.ID, err)
+			server.RespondJSON(w, http.StatusBadRequest, "error", err.Error(), nil)
+			return
+		}
+	}
+
+	payload := &getRepositoryResponse{
+		All:      all,
+		Posted:   posted,
+		Unposted: unposted,
+		Items: []getRepositoryItem{{
+			ID:              repo.ID,
+			Posted:          repo.Posted == 1,
+			URL:             repo.URL,
+			Text:            processedText,
+			DateAdded:       repo.DateAdded,
+			DatePosted:      repo.DatePosted,
+			PublishPriority: repo.PublishPriority,
+		}},
+		Page:       1,
+		PageSize:   1,
+		TotalPages: 1,
+		TotalItems: 1,
+	}
+	server.RespondJSON(w, http.StatusOK, "ok", "Repository fetched successfully", payload)
+}
+
 func GetRepository(w http.ResponseWriter, r *http.Request) {
 	var reqBody getRepositoryRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -158,6 +237,15 @@ func GetRepository(w http.ResponseWriter, r *http.Request) {
 			server.RespondJSON(w, http.StatusBadRequest, "error", fmt.Sprintf("Invalid language code: %v", err), nil)
 			return
 		}
+	}
+
+	// A single repository can be addressed directly by id or url. This bypasses
+	// sorting and pagination: callers that already know which item they want
+	// (e.g. a manual retry of a failed publication) must not depend on the item
+	// still sitting at the head of the publication queue.
+	if reqBody.ID != nil || reqBody.URL != nil {
+		getSingleRepository(w, &reqBody)
+		return
 	}
 
 	paginationRequested := reqBody.Page > 0 || reqBody.PageSize > 0
