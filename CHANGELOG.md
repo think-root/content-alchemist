@@ -1,3 +1,17 @@
+# [3.9.0](https://github.com/think-root/content-alchemist/compare/v3.8.0...v3.9.0) (2026-08-17)
+
+
+### Bug Fixes
+
+* **api:** keep multi-line text when extracting a language ([a737075](https://github.com/think-root/content-alchemist/commit/a7370751455369efadea45aef782f30fab6d6517))
+* **deps:** update goquery, pq, and sqlite3 dependencies ([f283eb8](https://github.com/think-root/content-alchemist/commit/f283eb88110e79b3705404a188ebb0359423e83f))
+* **language:** validate language codes against an embedded list ([0af26fc](https://github.com/think-root/content-alchemist/commit/0af26fcdb161462495cd79dcd078a255adac7d40))
+
+
+### Features
+
+* **api:** address a single repository by id or url in get-repository ([1be4e7f](https://github.com/think-root/content-alchemist/commit/1be4e7f3490621151e25e25157066766c52c2455))
+
 # [3.8.0](https://github.com/think-root/content-alchemist/compare/v3.7.2...v3.8.0) (2026-08-04)
 
 
