@@ -140,6 +140,43 @@ func TestGetRepositoryByURLOrID(t *testing.T) {
 		}
 	})
 
+	t.Run("multiline text keeps the requested language", func(t *testing.T) {
+		const multilineURL = "https://github.com/multiline/repo"
+		if _, err := database.DBThinkRoot.Exec(
+			"INSERT INTO github_repositories (url, text, posted, date_added) VALUES (?, ?, 1, '2026-08-15T16:00:00Z')",
+			multilineURL, "===(en)Line one\nLine two===(uk)Рядок один\nРядок два===",
+		); err != nil {
+			t.Fatalf("failed to insert multiline repository: %v", err)
+		}
+
+		_, data := postGetRepository(t, `{"url":"`+multilineURL+`","text_language":"en"}`)
+
+		if len(data.Items) != 1 || data.Items[0].Text != "Line one\nLine two" {
+			t.Fatalf("text = %q, want the multi-line English text", data.Items[0].Text)
+		}
+	})
+
+	// The single-item branch must be entered only on an explicit identifier:
+	// omitted or null fields have to keep serving the queue.
+	t.Run("omitted and null identifiers stay in queue mode", func(t *testing.T) {
+		for _, body := range []string{`{}`, `{"id":null,"url":null}`} {
+			rec, data := postGetRepository(t, body)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("body %s: status = %d, want 200 (%s)", body, rec.Code, rec.Body.String())
+			}
+			if len(data.Items) != data.All {
+				t.Errorf("body %s: got %d items, want all %d", body, len(data.Items), data.All)
+			}
+		}
+
+		// A null identifier alongside real filters must not hijack the query.
+		_, data := postGetRepository(t, `{"limit":1,"posted":false,"sort_by":"publication_queue","sort_order":"ASC","id":null}`)
+		if len(data.Items) != 1 || data.Items[0].Posted {
+			t.Fatalf("items = %+v, want the unposted head of the queue", data.Items)
+		}
+	})
+
 	t.Run("queue mode is unaffected", func(t *testing.T) {
 		rec, data := postGetRepository(t, `{"limit":1,"posted":false,"sort_by":"publication_queue","sort_order":"ASC","text_language":"en"}`)
 
@@ -214,6 +251,27 @@ func TestParseMultilingualTextFallsBackWhenRequestedLanguageMissing(t *testing.T
 			text:     "===(en)English repository description===(de)Deutsche Beschreibung===",
 			language: "uk",
 			want:     "English repository description",
+		},
+		{
+			// update-repository-text stores whatever it is given, newlines
+			// included. A segment spanning lines used to fail the match, so its
+			// language was dropped and the caller silently received another one.
+			name:     "multiline segment is returned for its own language",
+			text:     "===(en)Line one\nLine two===(uk)Рядок один\nРядок два===",
+			language: "en",
+			want:     "Line one\nLine two",
+		},
+		{
+			name:     "multiline single language text is returned in full",
+			text:     "(en)Line one\nLine two",
+			language: "en",
+			want:     "Line one\nLine two",
+		},
+		{
+			name:     "multiline text falls back to Ukrainian when the language is missing",
+			text:     "===(en)Line one\nLine two===(uk)Рядок один\nРядок два===",
+			language: "pl",
+			want:     "Рядок один\nРядок два",
 		},
 	}
 

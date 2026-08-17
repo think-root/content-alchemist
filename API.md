@@ -361,7 +361,7 @@ If you don't provide a `messages` array, the server creates one with default mul
 
 **Method:** `POST`
 
-**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates. By default, if `text_language` is omitted, the endpoint returns the raw multilingual text exactly as stored, e.g., "===(en)text===(uk)текст===". If `text_language` is provided (e.g., "en" or "uk"), the endpoint returns only that language’s text. If the requested language is not available, the response preserves the existing error handling behavior.
+**Description:** This endpoint retrieves a list of repositories based on the provided limit, posted status, and sorting preferences. Results can be sorted by different fields and directions, with special handling for null values in publication dates. By default, if `text_language` is omitted, the endpoint returns the raw multilingual text exactly as stored, e.g., "===(en)text===(uk)текст===". If `text_language` is provided (e.g., "en" or "uk"), the endpoint returns only that language’s text. If the requested language is not available, the request still succeeds and falls back to the Ukrainian text, or to the first language stored.
 
 **Curl Example:**
 
@@ -395,7 +395,9 @@ curl -X POST \
 
 **Addressing a single repository:**
 
-`id` and `url` exist for callers that already know which repository they want — for example content-maestro re-sending a publication that failed for one social connector. Because the item is fetched by identity rather than pulled from the queue, it is returned even when it is already posted. `text_language` still applies, so the caller gets the text in the language its target connector is configured for.
+`id` and `url` exist for callers that already know which repository they want — for example content-maestro re-sending a publication that failed for one social connector. Because the item is fetched by identity rather than pulled from the queue, it is returned even when it is already posted.
+
+`text_language` applies exactly as it does in queue mode, including its fallback: if the repository has no text in the requested language, the response is still `200` and carries the Ukrainian text, or the first language stored, with no indication that a substitution happened. A caller that must publish in one specific language has to compare the text itself.
 
 ```bash
 curl -X POST \

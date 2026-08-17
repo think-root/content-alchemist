@@ -72,7 +72,9 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 	}
 
 	// Check if text is in single language format: (code)text
-	singleLangPattern := `^\(([a-z]{2})\)(.*)$`
+	// (?s) is required: stored descriptions can span lines, and without it a
+	// multi-line segment does not match and its text is silently lost.
+	singleLangPattern := `(?s)^\(([a-z]{2})\)(.*)$`
 	if matched, _ := regexp.MatchString(singleLangPattern, text); matched {
 		re := regexp.MustCompile(singleLangPattern)
 		matches := re.FindStringSubmatch(text)
@@ -107,7 +109,7 @@ func ParseMultilingualText(text, languageCode string) (string, error) {
 			}
 
 			// Parse each section: (code)text
-			langPattern := `^\(([a-z]{2})\)(.*)$`
+			langPattern := `(?s)^\(([a-z]{2})\)(.*)$`
 			re := regexp.MustCompile(langPattern)
 			matches := re.FindStringSubmatch(section)
 			if len(matches) == 3 {
