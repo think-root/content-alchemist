@@ -1,28 +1,34 @@
 package server
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"sync"
-	"time"
 )
 
-// LanguageCode represents a language code structure from the API
+// LanguageCode represents a single ISO 639-1 language code and its English name
 type LanguageCode struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
 }
 
+// The ISO 639-1 list is baked into the binary on purpose. Fetching it at runtime
+// made every request that carried a text_language depend on an external host,
+// so a single 429 from that host turned into 400s across get-repository,
+// manual-generate and auto-generate.
+//
+//go:embed language_codes.json
+var languageCodesFS embed.FS
+
 var (
-	languageCodesCache map[string]LanguageCode
-	cacheExpiry        time.Time
-	cacheMutex         sync.RWMutex
-	cacheValidFor      = 24 * time.Hour // Cache for 24 hours
+	languageCodesOnce sync.Once
+	languageCodes     map[string]LanguageCode
+	languageCodesErr  error
 )
 
-// ValidateLanguageCodes validates language codes against the external API
+// ValidateLanguageCodes validates language codes against the embedded ISO 639-1 list
 func ValidateLanguageCodes(languageCodes []string) error {
 	if len(languageCodes) == 0 {
 		return nil
@@ -30,7 +36,7 @@ func ValidateLanguageCodes(languageCodes []string) error {
 
 	validCodes, err := getValidLanguageCodes()
 	if err != nil {
-		return fmt.Errorf("failed to fetch valid language codes: %w", err)
+		return fmt.Errorf("failed to load valid language codes: %w", err)
 	}
 
 	var invalidCodes []string
@@ -39,7 +45,7 @@ func ValidateLanguageCodes(languageCodes []string) error {
 		if code == "" {
 			continue
 		}
-		
+
 		if _, exists := validCodes[code]; !exists {
 			invalidCodes = append(invalidCodes, code)
 		}
@@ -52,52 +58,39 @@ func ValidateLanguageCodes(languageCodes []string) error {
 	return nil
 }
 
-// getValidLanguageCodes fetches and caches language codes from the external API
+// getValidLanguageCodes parses the embedded language code list once and reuses it
 func getValidLanguageCodes() (map[string]LanguageCode, error) {
-	cacheMutex.RLock()
-	if languageCodesCache != nil && time.Now().Before(cacheExpiry) {
-		defer cacheMutex.RUnlock()
-		return languageCodesCache, nil
-	}
-	cacheMutex.RUnlock()
-
-	cacheMutex.Lock()
-	defer cacheMutex.Unlock()
-
-	// Double-check after acquiring write lock
-	if languageCodesCache != nil && time.Now().Before(cacheExpiry) {
-		return languageCodesCache, nil
-	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get("https://gist.githubusercontent.com/Josantonius/b455e315bc7f790d14b136d61d9ae469/raw/language-codes.json")
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch language codes: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch language codes, status: %d", resp.StatusCode)
-	}
-
-	var languageCodesMap map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&languageCodesMap); err != nil {
-		return nil, fmt.Errorf("failed to decode language codes: %w", err)
-	}
-
-	// Create a map for faster lookups
-	codeMap := make(map[string]LanguageCode)
-	for code, name := range languageCodesMap {
-		codeMap[strings.ToLower(code)] = LanguageCode{
-			Code: code,
-			Name: name,
+	languageCodesOnce.Do(func() {
+		raw, err := languageCodesFS.ReadFile("language_codes.json")
+		if err != nil {
+			languageCodesErr = fmt.Errorf("failed to read embedded language codes: %w", err)
+			return
 		}
-	}
 
-	languageCodesCache = codeMap
-	cacheExpiry = time.Now().Add(cacheValidFor)
+		var languageCodesMap map[string]string
+		if err := json.Unmarshal(raw, &languageCodesMap); err != nil {
+			languageCodesErr = fmt.Errorf("failed to decode embedded language codes: %w", err)
+			return
+		}
 
-	return codeMap, nil
+		if len(languageCodesMap) == 0 {
+			languageCodesErr = fmt.Errorf("embedded language codes list is empty")
+			return
+		}
+
+		// Create a map for faster lookups
+		codeMap := make(map[string]LanguageCode, len(languageCodesMap))
+		for code, name := range languageCodesMap {
+			codeMap[strings.ToLower(code)] = LanguageCode{
+				Code: code,
+				Name: name,
+			}
+		}
+
+		languageCodes = codeMap
+	})
+
+	return languageCodes, languageCodesErr
 }
 
 // ParseLanguageCodes parses comma-separated language codes string
@@ -108,7 +101,7 @@ func ParseLanguageCodes(languageCodesStr string) []string {
 
 	codes := strings.Split(languageCodesStr, ",")
 	var parsedCodes []string
-	
+
 	for _, code := range codes {
 		code = strings.TrimSpace(code)
 		if code != "" {
@@ -133,6 +126,6 @@ func BuildMultilingualPrompt(languageCodes []string) string {
 	for _, code := range languageCodes {
 		examples = append(examples, fmt.Sprintf("===(%s)text_in_%s", code, code))
 	}
-	
+
 	return fmt.Sprintf("Generate your response in the following multilingual format: %s===", strings.Join(examples, ""))
 }
