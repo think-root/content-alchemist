@@ -98,8 +98,12 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 	if q := apiRes.DataQuality; q.Status != "" && q.Status != "ok" {
 		return nil, fmt.Errorf("OssInsight metric %q is %s since %s: %s", q.Metric, q.Status, q.UnavailableSince, q.Reason)
 	}
-	if len(apiRes.Data.Rows) == 0 {
-		return nil, fmt.Errorf("OssInsight returned no trending repositories for period %q, language %q", period, language)
+	// A narrow language filter can legitimately match nothing, the same way the
+	// GitHub trending page can come back empty, so only an unfiltered query that
+	// yields nothing is treated as a failure. This keeps the empty-payload guard
+	// useful even if the data_quality block ever disappears from the response.
+	if len(apiRes.Data.Rows) == 0 && (language == "" || language == "All") {
+		return nil, fmt.Errorf("OssInsight returned no trending repositories for period %q", period)
 	}
 
 	var allRepos []Repository
