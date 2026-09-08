@@ -41,6 +41,12 @@ type OssInsightResponse struct {
 			Forks           string `json:"forks"`
 		} `json:"rows"`
 	} `json:"data"`
+	DataQuality struct {
+		Status           string `json:"status"`
+		Metric           string `json:"metric"`
+		UnavailableSince string `json:"unavailable_since"`
+		Reason           string `json:"reason"`
+	} `json:"data_quality"`
 }
 
 func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Repository, error) {
@@ -85,6 +91,15 @@ func GetTrendingReposFromOssInsight(maxRepos int, period, language string) ([]Re
 	var apiRes OssInsightResponse
 	if err := json.NewDecoder(res.Body).Decode(&apiRes); err != nil {
 		return nil, fmt.Errorf("failed to decode OssInsight response: %v", err)
+	}
+
+	// OssInsight answers with HTTP 200 and no rows when the ranking it is asked
+	// for cannot be computed, so the payload has to be checked explicitly.
+	if q := apiRes.DataQuality; q.Status != "" && q.Status != "ok" {
+		return nil, fmt.Errorf("OssInsight metric %q is %s since %s: %s", q.Metric, q.Status, q.UnavailableSince, q.Reason)
+	}
+	if len(apiRes.Data.Rows) == 0 {
+		return nil, fmt.Errorf("OssInsight returned no trending repositories for period %q, language %q", period, language)
 	}
 
 	var allRepos []Repository
