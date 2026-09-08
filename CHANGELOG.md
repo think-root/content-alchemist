@@ -1,3 +1,11 @@
+## [3.9.1](https://github.com/think-root/content-alchemist/compare/v3.9.0...v3.9.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* **parser:** fail loudly when the OssInsight ranking is unavailable ([d5fa3e7](https://github.com/think-root/content-alchemist/commit/d5fa3e781da6998791b22a5be395809cd8be5e94))
+* **parser:** let a narrow OssInsight query come back empty ([4d6932a](https://github.com/think-root/content-alchemist/commit/4d6932a3fcbd87cf5e716d4d811a4c34239194e9))
+
 # [3.9.0](https://github.com/think-root/content-alchemist/compare/v3.8.0...v3.9.0) (2026-08-17)
 
 
